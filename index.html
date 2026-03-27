@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Linkware &mdash; Capital Markets, Engineered</title>
+<meta name="description" content="Practical insights on trading system implementation, capital markets technology, and consulting."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0e0e0e;--ink2:#3a3a3a;--ink3:#6b6b6b;--ink4:#9b9b9b;
+  --paper:#f5f2eb;--paper2:#ede9df;--paper3:#e4dfd3;
+  --accent:#1a5c45;--alight:#e8f2ee;
+  --warm:#c4460a;--wlight:#fdf0ea;
+  --blue:#1a3a5c;--blight:#e8eef5;
+  --bdr:rgba(14,14,14,.1);--bdr2:rgba(14,14,14,.2);
+  --serif:"DM Serif Display",Georgia,serif;
+  --sans:"DM Sans",system-ui,sans-serif;
+  --admbg:#0f1117;--adms:#171b24;--adms2:#1e2330;
+  --admb:rgba(255,255,255,.07);--admb2:rgba(255,255,255,.12);
+  --admt:#e8e6e0;--admm:#7a7a8a;--adma:#4ade80;
+  --admad:rgba(74,222,128,.12);--admw:#f97316;--admwd:rgba(249,115,22,.12);
+  --admdan:#ef4444;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);min-height:100vh;}
+
+/* pages */
+.page{display:none;}.page.active{display:block;}
+
+/* badges */
+.badge{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;}
+.cat-implementation{background:var(--alight);color:var(--accent);}
+.cat-career{background:var(--blight);color:var(--blue);}
+.cat-insight{background:var(--wlight);color:var(--warm);}
+.status-published{background:#d1fae5;color:#065f46;}
+.status-draft{background:#fef3c7;color:#92400e;}
+
+/* nav */
+.pub-nav{position:sticky;top:0;z-index:500;background:#f5f2eb;border-bottom:1px solid var(--bdr);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:56px;}
+.nav-logo{font-family:var(--serif);font-size:1.25rem;color:var(--ink);cursor:pointer;text-decoration:none;}
+.nav-logo span{color:var(--accent);}
+.nav-links{display:flex;align-items:center;gap:1.5rem;list-style:none;}
+.nav-links a{font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;text-decoration:none;transition:color .2s;white-space:nowrap;}
+.nav-links a:hover{color:var(--ink);}
+.nav-cta{background:var(--ink) !important;color:#f5f2eb !important;padding:7px 16px;border-radius:20px;}
+.nav-cta:hover{background:var(--accent) !important;}
+
+/* hamburger */
+.ham{display:none;flex-direction:column;justify-content:center;gap:5px;padding:8px;background:none;border:none;cursor:pointer;flex-shrink:0;}
+.ham span{display:block;width:22px;height:2px;background:#0e0e0e;border-radius:2px;transition:transform .25s,opacity .25s;}
+.ham.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.ham.open span:nth-child(2){opacity:0;}
+.ham.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* drawer */
+#drawer{display:none;position:fixed;inset:0;background:#f5f2eb;z-index:1000;flex-direction:column;overflow-y:auto;}
+#drawer.open{display:flex;}
+.drw-head{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 1.5rem;border-bottom:1px solid var(--bdr);flex-shrink:0;}
+.drw-logo{font-family:var(--serif);font-size:1.25rem;color:var(--ink);}
+.drw-logo span{color:var(--accent);}
+.drw-close{background:none;border:1px solid var(--bdr2);border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;color:var(--ink3);display:flex;align-items:center;justify-content:center;line-height:1;}
+.drw-links{display:flex;flex-direction:column;}
+.drw-links a{font-size:1.1rem;font-weight:500;color:var(--ink2);padding:1rem 1.5rem;border-bottom:1px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:space-between;text-decoration:none;}
+.drw-links a::after{content:"\2192";color:var(--ink4);}
+.drw-cta{margin:1.5rem;background:var(--ink);color:#f5f2eb !important;border-radius:8px;padding:1rem 1.5rem;text-align:center;justify-content:center !important;font-weight:600;}
+.drw-cta::after{display:none !important;}
+
+/* ticker */
+.ticker-wrap{overflow:hidden;border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:var(--paper2);padding:10px 0;}
+.ticker{display:flex;gap:3rem;animation:tick 35s linear infinite;width:max-content;}
+.ticker-item{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--ink3);white-space:nowrap;}
+.ticker-dot{width:4px;height:4px;background:var(--accent);border-radius:50%;}
+@keyframes tick{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* pub hero */
+.pub-hero{padding:5rem 2rem 3rem;max-width:1200px;margin:0 auto;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem;}
+.eyebrow::before{content:"";display:block;width:24px;height:1px;background:var(--accent);}
+.pub-hero h1{font-family:var(--serif);font-size:clamp(2.5rem,5vw,3.5rem);line-height:1.1;letter-spacing:-.02em;margin-bottom:1rem;}
+.pub-hero h1 em{font-style:italic;color:var(--accent);}
+.pub-hero p{font-size:1rem;line-height:1.7;color:var(--ink3);max-width:520px;}
+
+/* filters */
+.filters-bar{max-width:1200px;margin:0 auto;padding:2rem 2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.filter-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.pill{font-size:13px;font-weight:500;padding:6px 16px;border-radius:20px;border:1px solid var(--bdr2);background:transparent;color:var(--ink3);cursor:pointer;font-family:var(--sans);transition:all .2s;}
+.pill:hover{color:var(--ink);border-color:var(--ink);}
+.pill.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.srch-wrap{position:relative;}
+.srch-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink4);pointer-events:none;}
+#pub-search{font-family:var(--sans);font-size:13px;padding:8px 14px 8px 36px;border:1px solid var(--bdr2);border-radius:20px;background:var(--paper2);color:var(--ink);outline:none;width:220px;transition:border-color .2s,width .3s;}
+#pub-search:focus{border-color:var(--accent);width:280px;}
+#pub-search::placeholder{color:var(--ink4);}
+
+/* grid */
+.grid-section{max-width:1200px;margin:0 auto;padding:0 2rem 5rem;}
+.sec-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:1.5rem;display:flex;align-items:center;gap:8px;}
+.sec-label::after{content:"";flex:1;height:1px;background:var(--bdr);}
+#pub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;background:var(--bdr);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;}
+.art-card{background:var(--paper);padding:2rem;cursor:pointer;display:flex;flex-direction:column;gap:.75rem;transition:background .2s;}
+.art-card:hover{background:var(--paper2);}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.card-num{font-family:var(--serif);font-size:2.5rem;color:var(--bdr2);line-height:1;user-select:none;}
+.card-title{font-family:var(--serif);font-size:1.1rem;line-height:1.3;color:var(--ink);letter-spacing:-.01em;}
+.card-excerpt{font-size:13px;line-height:1.6;color:var(--ink3);flex:1;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:.75rem;border-top:1px solid var(--bdr);margin-top:auto;}
+.card-date{font-size:11px;color:var(--ink4);}
+.card-arrow{width:28px;height:28px;border-radius:50%;border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ink3);transition:all .2s;flex-shrink:0;}
+.art-card:hover .card-arrow{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.grid-empty{grid-column:1/-1;text-align:center;padding:4rem;font-size:15px;color:var(--ink4);background:var(--paper);}
+
+/* reader */
+.reader-wrap{max-width:740px;margin:0 auto;padding:3rem 2rem 6rem;}
+.rdr-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;margin-bottom:2rem;}
+.rdr-back:hover{color:var(--ink);}
+.rdr-meta{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.rdr-date{font-size:13px;color:var(--ink4);}
+.rdr-title{font-family:var(--serif);font-size:clamp(1.9rem,4vw,2.75rem);line-height:1.15;letter-spacing:-.02em;color:var(--ink);margin-bottom:1.5rem;}
+.rdr-intro{font-size:1.1rem;line-height:1.75;color:var(--ink2);padding-bottom:2rem;border-bottom:1px solid var(--bdr);margin-bottom:2.5rem;}
+.rdr-body{font-size:17px;line-height:1.8;color:var(--ink2);}
+.rdr-body h2{font-family:var(--serif);font-size:1.5rem;color:var(--ink);margin:2.5rem 0 .75rem;}
+.rdr-body h3{font-size:1.1rem;font-weight:600;color:var(--ink);margin:1.75rem 0 .5rem;}
+.rdr-body p{margin-bottom:1.25rem;}
+.rdr-body ul,.rdr-body ol{margin:1rem 0 1.25rem 1.5rem;}
+.rdr-body li{margin-bottom:.5rem;}
+.rdr-body blockquote{border-left:3px solid var(--bdr2);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;color:var(--ink3);}
+
+/* newsletter */
+.nl-section{background:var(--ink);padding:5rem 2rem;}
+.nl-inner{max-width:560px;margin:0 auto;text-align:center;}
+.nl-ey{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:1rem;}
+.nl-inner h2{font-family:var(--serif);font-size:clamp(1.75rem,4vw,2.4rem);color:#fff;line-height:1.15;margin-bottom:.75rem;}
+.nl-inner p{font-size:15px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:2rem;}
+.nl-form{display:flex;gap:8px;max-width:400px;margin:0 auto;}
+.nl-form input{flex:1;font-family:var(--sans);font-size:14px;padding:11px 16px;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#fff;outline:none;}
+.nl-form input::placeholder{color:rgba(255,255,255,.25);}
+.nl-form button{font-family:var(--sans);font-size:14px;font-weight:600;padding:11px 18px;border-radius:6px;border:none;background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;}
+
+/* footer */
+.pub-footer{background:var(--paper2);border-top:1px solid var(--bdr);padding:1.5rem 2rem;text-align:center;}
+.pub-footer p{font-size:13px;color:var(--ink4);}
+.pub-footer a{color:var(--accent);cursor:pointer;text-decoration:none;}
+
+/* home */
+.home-hero{min-height:90vh;display:flex;flex-direction:column;justify-content:center;padding:4rem 2rem;max-width:1200px;margin:0 auto;}
+.home-hero h1{font-family:var(--serif);font-size:clamp(3rem,7vw,5.5rem);line-height:1.05;letter-spacing:-.03em;max-width:820px;margin-bottom:1.75rem;}
+.home-hero h1 em{font-style:italic;color:var(--accent);}
+.home-sub{font-size:1.1rem;line-height:1.75;color:var(--ink3);max-width:540px;margin-bottom:2.5rem;}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4rem;}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:13px 26px;border-radius:6px;cursor:pointer;border:none;font-family:var(--sans);text-decoration:none;transition:all .2s;}
+.btn-dark{background:var(--ink);color:var(--paper);}
+.btn-dark:hover{background:var(--accent);}
+.btn-out{background:transparent;color:var(--ink);border:1px solid var(--bdr2);}
+.btn-out:hover{background:var(--paper2);}
+.btn-w{background:#fff;color:var(--ink);}
+.btn-w:hover{background:var(--paper2);}
+.scroll-ind{font-size:11px;color:var(--ink4);display:flex;align-items:center;gap:10px;letter-spacing:.08em;text-transform:uppercase;}
+.scroll-ind::before{content:"";display:block;width:1px;height:36px;background:var(--bdr2);}
+.feat-section{background:var(--paper2);border-top:1px solid var(--bdr);padding:5rem 2rem;}
+.feat-inner{max-width:1200px;margin:0 auto;}
+.feat-inner h2{font-family:var(--serif);font-size:clamp(1.75rem,3vw,2.5rem);margin-bottom:.75rem;}
+.feat-lead{font-size:1rem;color:var(--ink3);max-width:560px;margin-bottom:3rem;line-height:1.7;}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;background:var(--bdr);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;}
+.feat-item{background:var(--paper);padding:2rem;transition:background .2s;}
+.feat-item:hover{background:var(--paper3);}
+.feat-num{font-family:var(--serif);font-size:1.75rem;color:var(--bdr2);margin-bottom:1rem;}
+.feat-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.5rem;}
+.feat-body{font-size:13px;line-height:1.65;color:var(--ink3);}
+.stats-wrap{max-width:1200px;margin:0 auto;padding:5rem 2rem;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;text-align:center;}
+.stat-big{font-family:var(--serif);font-size:3rem;color:var(--ink);line-height:1;margin-bottom:.5rem;}
+.stat-lbl{font-size:13px;color:var(--ink3);line-height:1.5;}
+.cta-band{background:var(--ink);padding:6rem 2rem;text-align:center;}
+.cta-band h2{font-family:var(--serif);font-size:clamp(2rem,4vw,3.25rem);color:#fff;line-height:1.1;margin-bottom:1rem;}
+.cta-band p{font-size:15px;color:rgba(255,255,255,.45);max-width:460px;margin:0 auto 2.5rem;line-height:1.75;}
+
+/* services */
+.svc-hero{padding:5rem 2rem 4rem;max-width:1200px;margin:0 auto;border-bottom:1px solid var(--bdr);}
+.svc-hero h1{font-family:var(--serif);font-size:clamp(2.5rem,5vw,3.75rem);line-height:1.1;margin-bottom:1.25rem;}
+.svc-hero h1 em{font-style:italic;color:var(--accent);}
+.svc-hero p{font-size:1.05rem;line-height:1.75;color:var(--ink3);max-width:580px;}
+.svc-grid{max-width:1200px;margin:0 auto;padding:3rem 2rem 0;display:grid;grid-template-columns:1fr 1fr;gap:1.5px;background:var(--bdr);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;}
+.svc-card{background:var(--paper);padding:2.5rem;display:flex;flex-direction:column;gap:1rem;transition:background .2s;}
+.svc-card:hover{background:var(--paper2);}
+.svc-full{grid-column:1/-1;}
+.svc-icon{width:44px;height:44px;border-radius:8px;border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;}
+.svc-card h3{font-family:var(--serif);font-size:1.35rem;line-height:1.2;color:var(--ink);}
+.svc-card > p{font-size:14px;line-height:1.75;color:var(--ink3);}
+.svc-card ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.svc-card ul li{font-size:13px;color:var(--ink2);display:flex;align-items:flex-start;gap:10px;line-height:1.5;}
+.svc-card ul li::before{content:"";display:block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
+.process-wrap{max-width:1200px;margin:0 auto;padding:4rem 2rem;}
+.process-wrap h2{font-family:var(--serif);font-size:clamp(1.75rem,3vw,2.4rem);margin-bottom:.75rem;}
+.process-lead{font-size:1rem;color:var(--ink3);max-width:520px;margin-bottom:3rem;line-height:1.7;}
+.process-steps{display:grid;grid-template-columns:repeat(5,1fr);background:var(--bdr);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;gap:1.5px;}
+.proc-step{background:var(--paper);padding:1.75rem 1.25rem;text-align:center;}
+.proc-num{font-family:var(--serif);font-size:1.75rem;color:var(--accent);margin-bottom:.5rem;}
+.proc-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:.4rem;}
+.proc-body{font-size:12px;color:var(--ink3);line-height:1.55;}
+.svc-cta{background:var(--paper2);border-top:1px solid var(--bdr);padding:5rem 2rem;text-align:center;}
+.svc-cta h2{font-family:var(--serif);font-size:clamp(1.75rem,3vw,2.4rem);margin-bottom:.75rem;}
+.svc-cta p{font-size:15px;color:var(--ink3);max-width:460px;margin:0 auto 2rem;line-height:1.7;}
+
+/* about */
+.abt-hero{padding:5rem 2rem 4rem;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:4rem;align-items:start;}
+.abt-hero h1{font-family:var(--serif);font-size:clamp(2.5rem,5vw,3.75rem);line-height:1.1;margin-bottom:1.25rem;}
+.abt-hero h1 em{font-style:italic;color:var(--accent);}
+.abt-text p{font-size:1rem;line-height:1.8;color:var(--ink3);margin-bottom:1rem;}
+.abt-visual{background:var(--paper2);border:1px solid var(--bdr);border-radius:12px;padding:2rem;}
+.abt-stat{display:flex;align-items:center;gap:1.25rem;padding:1.5rem 0;}
+.abt-stat:not(:last-child){border-bottom:1px solid var(--bdr);}
+.abt-num{font-family:var(--serif);font-size:2.25rem;color:var(--ink);min-width:64px;line-height:1;}
+.abt-lbl{font-size:13px;color:var(--ink3);line-height:1.5;}
+.vals-wrap{max-width:1200px;margin:0 auto;padding:0 2rem 4rem;}
+.vals-wrap h2{font-family:var(--serif);font-size:clamp(1.75rem,3vw,2.4rem);margin-bottom:.75rem;}
+.vals-lead{font-size:1rem;color:var(--ink3);max-width:520px;margin-bottom:2.5rem;line-height:1.7;}
+.vals-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;background:var(--bdr);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;}
+.val-item{background:var(--paper);padding:2rem;transition:background .2s;}
+.val-item:hover{background:var(--paper2);}
+.val-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.6rem;display:flex;align-items:center;gap:8px;}
+.val-title::before{content:"";display:block;width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.val-body{font-size:13px;line-height:1.7;color:var(--ink3);}
+.exp-wrap{background:var(--paper2);border-top:1px solid var(--bdr);padding:4rem 2rem;}
+.exp-inner{max-width:1200px;margin:0 auto;}
+.exp-inner h2{font-family:var(--serif);font-size:clamp(1.75rem,3vw,2.4rem);margin-bottom:.75rem;}
+.exp-inner > p{font-size:1rem;color:var(--ink3);max-width:560px;margin-bottom:2rem;line-height:1.7;}
+.exp-tags{display:flex;flex-wrap:wrap;gap:8px;}
+.exp-tag{font-size:13px;font-weight:500;padding:8px 16px;border-radius:20px;border:1px solid var(--bdr2);background:var(--paper);color:var(--ink2);transition:all .2s;}
+.exp-tag:hover{background:var(--alight);color:var(--accent);}
+
+/* contact */
+.ctc-wrap{max-width:640px;margin:0 auto;padding:4rem 2rem 6rem;}
+.ctc-wrap h2{font-family:var(--serif);font-size:clamp(1.75rem,3vw,2.4rem);margin-bottom:.75rem;}
+.ctc-wrap > p{font-size:1rem;color:var(--ink3);line-height:1.7;margin-bottom:2.5rem;}
+.cf{display:flex;flex-direction:column;gap:1.25rem;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.cf-fld{display:flex;flex-direction:column;gap:6px;}
+.cf-lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);}
+.cf-inp{font-family:var(--sans);font-size:14px;padding:11px 14px;border:1px solid var(--bdr2);border-radius:6px;background:var(--paper2);color:var(--ink);outline:none;transition:border-color .2s;width:100%;}
+.cf-inp:focus{border-color:var(--accent);}
+.cf-inp::placeholder{color:var(--ink4);}
+.cf-ta{font-family:var(--sans);font-size:14px;padding:11px 14px;border:1px solid var(--bdr2);border-radius:6px;background:var(--paper2);color:var(--ink);outline:none;resize:vertical;line-height:1.6;min-height:140px;width:100%;transition:border-color .2s;}
+.cf-ta:focus{border-color:var(--accent);}
+.cf-ta::placeholder{color:var(--ink4);}
+.cf-ok{display:none;background:var(--alight);border:1px solid rgba(26,92,69,.2);border-radius:8px;padding:1rem 1.25rem;font-size:14px;color:var(--accent);line-height:1.6;}
+.cf-err{display:none;background:var(--wlight);border:1px solid rgba(196,70,10,.2);border-radius:8px;padding:1rem 1.25rem;font-size:14px;color:var(--warm);}
+
+/* admin login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--admbg);padding:2rem;}
+.login-card{background:var(--adms);border:1px solid var(--admb);border-radius:12px;padding:2.5rem;width:100%;max-width:360px;}
+.login-logo{font-family:var(--serif);font-size:1.4rem;color:var(--admt);margin-bottom:.25rem;}
+.login-logo span{color:var(--adma);}
+.login-sub{font-size:13px;color:var(--admm);margin-bottom:2rem;}
+.a-lbl{display:block;font-size:12px;font-weight:500;color:var(--admm);letter-spacing:.04em;margin-bottom:6px;}
+.a-inp{width:100%;font-family:var(--sans);font-size:14px;padding:10px 14px;border-radius:6px;border:1px solid var(--admb);background:var(--adms2);color:var(--admt);outline:none;transition:border-color .2s;}
+.a-inp:focus{border-color:var(--adma);}
+.a-inp::placeholder{color:var(--admm);}
+.login-err{font-size:13px;color:var(--admdan);margin-top:.5rem;display:none;}
+.a-btn{width:100%;font-family:var(--sans);font-size:14px;font-weight:600;padding:11px;border-radius:6px;border:none;background:var(--adma);color:#0a0a0a;cursor:pointer;margin-top:1.25rem;}
+.a-btn:hover{opacity:.85;}
+.a-btn-ghost{background:transparent;border:1px solid var(--admb);color:var(--admm);margin-top:.5rem;}
+.a-btn-ghost:hover{border-color:var(--admb2);color:var(--admt);opacity:1;}
+
+/* admin shell */
+.adm-shell{display:flex;min-height:100vh;background:var(--admbg);}
+.adm-sb{width:220px;flex-shrink:0;background:var(--adms);border-right:1px solid var(--admb);display:flex;flex-direction:column;padding:1.5rem 0;}
+.adm-sb-logo{font-family:var(--serif);font-size:1.1rem;color:var(--admt);padding:0 1.25rem 1.5rem;border-bottom:1px solid var(--admb);}
+.adm-sb-logo span{color:var(--adma);}
+.adm-nav{display:flex;flex-direction:column;gap:2px;padding:1rem .75rem;flex:1;}
+.adm-ni{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:var(--admm);padding:8px 12px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.adm-ni:hover{background:var(--adms2);color:var(--admt);}
+.adm-ni.active{background:var(--admad);color:var(--adma);}
+.adm-ni svg{flex-shrink:0;}
+.adm-sb-foot{padding:.75rem;border-top:1px solid var(--admb);}
+.adm-main{flex:1;overflow-y:auto;padding:2rem;}
+.adm-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.adm-ptitle{font-size:1.25rem;font-weight:600;color:var(--admt);}
+.adm-new{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;border:none;background:var(--adma);color:#0a0a0a;cursor:pointer;}
+.adm-new:hover{opacity:.85;}
+.adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+.adm-sc{background:var(--adms);border:1px solid var(--admb);border-radius:8px;padding:1.25rem;}
+.adm-sn{font-size:1.75rem;font-weight:600;color:var(--admt);margin-bottom:2px;}
+.adm-sl{font-size:12px;color:var(--admm);}
+.adm-tw{background:var(--adms);border:1px solid var(--admb);border-radius:8px;overflow:hidden;}
+.adm-tbl{width:100%;border-collapse:collapse;}
+.adm-tbl th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--admm);padding:12px 16px;text-align:left;border-bottom:1px solid var(--admb);background:var(--adms2);}
+.adm-tbl td{font-size:13px;color:var(--admt);padding:14px 16px;border-bottom:1px solid var(--admb);vertical-align:middle;}
+.adm-tbl tr:last-child td{border-bottom:none;}
+.adm-tbl tr:hover td{background:rgba(255,255,255,.02);}
+.tc{font-weight:500;max-width:300px;}
+.tc p{font-size:11px;font-weight:400;color:var(--admm);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;}
+.tacts{display:flex;gap:6px;justify-content:flex-end;}
+.tb{font-family:var(--sans);font-size:12px;font-weight:500;padding:5px 12px;border-radius:5px;border:1px solid var(--admb);background:transparent;color:var(--admm);cursor:pointer;transition:all .15s;}
+.tb:hover{border-color:var(--admb2);color:var(--admt);}
+.tb.te{color:var(--adma);border-color:rgba(74,222,128,.25);}
+.tb.te:hover{background:var(--admad);}
+.tb.td{color:var(--admdan);border-color:rgba(239,68,68,.2);}
+.tb.td:hover{background:rgba(239,68,68,.1);}
+.tb.tp{color:var(--admw);border-color:rgba(249,115,22,.25);}
+.tb.tp:hover{background:var(--admwd);}
+.adm-card{background:var(--adms);border:1px solid var(--admb);border-radius:8px;padding:1.25rem;}
+.adm-ct{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--admm);margin-bottom:1rem;}
+.adm-fld{margin-bottom:1rem;}
+.adm-fld:last-child{margin-bottom:0;}
+.a-sel{width:100%;font-family:var(--sans);font-size:14px;padding:10px 14px;border-radius:6px;border:1px solid var(--admb);background:var(--adms2);color:var(--admt);outline:none;cursor:pointer;}
+.a-sel:focus{border-color:var(--adma);}
+.a-ta{width:100%;font-family:var(--sans);font-size:14px;padding:10px 14px;border-radius:6px;border:1px solid var(--admb);background:var(--adms2);color:var(--admt);outline:none;resize:vertical;line-height:1.6;transition:border-color .2s;}
+.a-ta:focus{border-color:var(--adma);}
+.a-ta::placeholder{color:var(--admm);}
+.ed-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:8px;border:1px solid var(--admb);border-bottom:none;border-radius:6px 6px 0 0;background:var(--adms2);}
+.tb-btn{font-family:var(--sans);font-size:12px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid var(--admb);background:transparent;color:var(--admm);cursor:pointer;}
+.tb-btn:hover{background:var(--adms);color:var(--admt);}
+#editor-body{border-radius:0 0 6px 6px;min-height:320px;}
+.cc{font-size:11px;color:var(--admm);text-align:right;margin-top:4px;}
+.st-tog{display:flex;gap:8px;}
+.st-opt{flex:1;padding:9px;border-radius:6px;border:1px solid var(--admb);background:transparent;color:var(--admm);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;text-align:center;transition:all .2s;}
+.st-pub{background:var(--admad);color:var(--adma);border-color:rgba(74,222,128,.3);}
+.st-dft{background:var(--admwd);color:var(--admw);border-color:rgba(249,115,22,.3);}
+.save-bar{display:flex;gap:8px;margin-top:1.5rem;}
+.save-bar .a-btn{flex:1;margin:0;}
+.ed-grid{display:grid;grid-template-columns:1fr 280px;gap:1.5rem;align-items:start;}
+.ed-main{display:flex;flex-direction:column;gap:1rem;}
+.ed-side{display:flex;flex-direction:column;gap:1rem;}
+
+/* messages */
+.msg-card{background:var(--adms);border:1px solid var(--admb);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:.75rem;}
+.msg-card.unread{border-color:rgba(74,222,128,.3);}
+.msg-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.75rem;}
+.msg-name{font-size:14px;font-weight:600;color:var(--admt);}
+.msg-meta{font-size:12px;color:var(--admm);margin-top:2px;}
+.msg-svc{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--adma);background:var(--admad);padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.msg-body{font-size:13px;color:var(--admt);line-height:1.6;background:var(--adms2);border-radius:6px;padding:.875rem 1rem;margin-bottom:.75rem;}
+.msg-acts{display:flex;gap:8px;}
+.msg-empty{text-align:center;padding:4rem 2rem;color:var(--admm);font-size:15px;}
+
+/* toast */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--adma);color:#0a0a0a;font-size:13px;font-weight:600;padding:10px 20px;border-radius:8px;z-index:9999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* responsive */
+@media(max-width:900px){
+  #pub-grid{grid-template-columns:1fr 1fr;}
+  .adm-stats{grid-template-columns:1fr 1fr;}
+  .ed-grid{grid-template-columns:1fr;}
+  .feat-grid{grid-template-columns:1fr 1fr;}
+  .svc-grid{grid-template-columns:1fr;}
+  .svc-full{grid-column:1;}
+  .vals-grid{grid-template-columns:1fr 1fr;}
+  .stats-wrap{grid-template-columns:1fr 1fr;}
+  .process-steps{grid-template-columns:1fr 1fr 1fr;}
+  .abt-hero{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .nav-links{display:none;}
+  .ham{display:flex;}
+  #pub-grid{grid-template-columns:1fr;}
+  .adm-sb{display:none;}
+  .adm-stats{grid-template-columns:1fr 1fr;}
+  .nl-form{flex-direction:column;}
+  .feat-grid,.vals-grid{grid-template-columns:1fr;}
+  .stats-wrap{grid-template-columns:1fr 1fr;}
+  .cf-row{grid-template-columns:1fr;}
+  .process-steps{grid-template-columns:1fr 1fr;}
+  .home-hero{min-height:auto;padding:2.5rem 1rem 2rem;}
+  .home-hero h1{font-size:2.5rem;}
+  .cta-row{flex-direction:column;}
+  .btn{width:100%;justify-content:center;}
+  .scroll-ind{display:none;}
+  .pub-hero,.svc-hero,.process-wrap,.vals-wrap,.exp-wrap,.abt-hero,.ctc-wrap{padding-left:1rem;padding-right:1rem;}
+  .feat-section,.grid-section,.svc-cta,.cta-band,.nl-section{padding-left:1rem;padding-right:1rem;}
+  .filters-bar{padding:1.5rem 1rem 1rem;flex-direction:column;align-items:stretch;}
+  .filter-pills{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
+  .srch-wrap{width:100%;}
+  #pub-search{width:100%;}
+  .reader-wrap{padding:2rem 1rem 4rem;}
+  .rdr-title{font-size:1.75rem;}
+  .rdr-body{font-size:15px;}
+  .adm-main{padding:1rem;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- GLOBAL MOBILE DRAWER -->
+<div id="drawer">
+  <div class="drw-head">
+    <span class="drw-logo">Link<span>ware</span></span>
+    <button class="drw-close" onclick="closeDrawer()">&#x00D7;</button>
+  </div>
+  <nav class="drw-links">
+    <a onclick="closeDrawer();go('home');">Home</a>
+    <a onclick="closeDrawer();go('public');">Insights</a>
+    <a onclick="closeDrawer();go('services');">Services</a>
+    <a onclick="closeDrawer();go('about');">About</a>
+    <a class="drw-cta" onclick="closeDrawer();goNl();">Subscribe</a>
+  </nav>
+</div>
+
+<div id="page-home" class="page active">
+
+  <nav class="pub-nav">
+    <a class="nav-logo" onclick="go('home')">Link<span>ware</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('home')" style="color:var(--ink)">Home</a></li>
+      <li><a onclick="go('public')">Insights</a></li>
+      <li><a onclick="go('services')">Services</a></li>
+      <li><a onclick="go('about')">About</a></li>
+      <li><a onclick="goNl()" class="nav-cta">Subscribe</a></li>
+    </ul>
+    <button class="ham" onclick="openDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="home-hero">
+    <div class="eyebrow">Capital markets technology</div>
+    <h1>Trading systems built to <em>last.</em> Delivered to go live.</h1>
+    <p class="home-sub">Linkware is a specialist capital markets technology consultancy. We help banks, asset managers, and fintech firms implement, configure, and stabilise complex trading and risk systems &mdash; from first workshop to go-live and beyond.</p>
+    <div class="cta-row">
+      <span class="btn btn-dark" onclick="go('services')">Our services &rarr;</span>
+      <span class="btn btn-out" onclick="go('public')">Read the insights</span>
+    </div>
+    <div class="scroll-ind">Scroll to explore</div>
+  </div>
+  <div class="feat-section">
+    <div class="feat-inner">
+      <h2>What we do</h2>
+      <p class="feat-lead">Ten years of capital markets implementation experience, across derivatives, fixed income, and commodities &mdash; applied to your most complex delivery challenges.</p>
+      <div class="feat-grid">
+        <div class="feat-item"><div class="feat-num">01</div><div class="feat-title">Implementation consulting</div><div class="feat-body">End-to-end programme delivery for front-to-back trading system implementations. We bring structure, rigour, and hard-won experience to projects that cannot afford to fail.</div></div>
+        <div class="feat-item"><div class="feat-num">02</div><div class="feat-title">System configuration</div><div class="feat-body">Deep technical configuration of trading and risk platforms &mdash; instrument setup, booking models, workflow design, and reference data architecture.</div></div>
+        <div class="feat-item"><div class="feat-num">03</div><div class="feat-title">UAT management</div><div class="feat-body">Structured test design, script development, defect triage, and sign-off management. We run UAT programmes that actually validate the system &mdash; not just tick the box.</div></div>
+        <div class="feat-item"><div class="feat-num">04</div><div class="feat-title">Training &amp; workshops</div><div class="feat-body">Tailored training for front office, operations, and IT teams. Practical, hands-on sessions that build genuine capability rather than passive familiarity.</div></div>
+        <div class="feat-item"><div class="feat-num">05</div><div class="feat-title">Project rescue</div><div class="feat-body">When a programme is in trouble &mdash; late, over budget, or losing business confidence &mdash; we step in to diagnose, stabilise, and re-establish delivery momentum.</div></div>
+        <div class="feat-item"><div class="feat-num">06</div><div class="feat-title">Industry insights</div><div class="feat-body">Free, practical writing on implementation, technology, and capital markets careers &mdash; published weekly on this site and via The Linkware Brief newsletter.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-wrap">
+    <div><div class="stat-big">10+</div><div class="stat-lbl">Years of capital markets technology experience</div></div>
+    <div><div class="stat-big">3</div><div class="stat-lbl">Asset class specialisms: derivatives, fixed income &amp; commodities</div></div>
+    <div><div class="stat-big">5</div><div class="stat-lbl">Core service lines from discovery to stabilisation</div></div>
+    <div><div class="stat-big">&infin;</div><div class="stat-lbl">Commitment to honest, practical delivery advice</div></div>
+  </div>
+  <div class="cta-band">
+    <h2>Ready to talk?</h2>
+    <p>Whether you have an upcoming implementation, a programme in difficulty, or simply want to explore how Linkware can help &mdash; get in touch.</p>
+    <span class="btn btn-w" onclick="go('about')">Start a conversation &rarr;</span>
+  </div>
+  <footer class="pub-footer">
+    <p><a onclick="go('home')">linkware.org</a> &nbsp;&middot;&nbsp; Capital Markets, Engineered &nbsp;&middot;&nbsp; <a onclick="goAdmin()">Admin</a></p>
+  </footer>
+</div>
+
+<div id="page-public" class="page">
+
+  <nav class="pub-nav">
+    <a class="nav-logo" onclick="go('home')">Link<span>ware</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('home')">Home</a></li>
+      <li><a onclick="go('public')" style="color:var(--ink)">Insights</a></li>
+      <li><a onclick="go('services')">Services</a></li>
+      <li><a onclick="go('about')">About</a></li>
+      <li><a onclick="goNl()" class="nav-cta">Subscribe</a></li>
+    </ul>
+    <button class="ham" onclick="openDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="ticker-wrap"><div class="ticker" id="ticker"></div></div>
+  <div class="pub-hero">
+    <div class="eyebrow">Insights &amp; analysis</div>
+    <h1>Capital markets, <em>from the inside</em></h1>
+    <p>Practical writing on trading system implementation, financial technology consulting, and the real challenges of delivering complex projects in capital markets.</p>
+  </div>
+  <div class="filters-bar">
+    <div class="filter-pills">
+      <button class="pill active" onclick="filterPub('all',this)">All</button>
+      <button class="pill" onclick="filterPub('implementation',this)">Implementation</button>
+      <button class="pill" onclick="filterPub('career',this)">Career &amp; consulting</button>
+      <button class="pill" onclick="filterPub('insight',this)">Industry insight</button>
+    </div>
+    <div class="srch-wrap">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <input type="text" id="pub-search" placeholder="Search articles&hellip;" oninput="searchPub(this.value)"/>
+    </div>
+  </div>
+  <section class="grid-section">
+    <div class="sec-label">All articles</div>
+    <div id="pub-grid"></div>
+  </section>
+  <section class="nl-section" id="nl-section">
+    <div class="nl-inner">
+      <div class="nl-ey">Stay informed</div>
+      <h2>The Linkware brief</h2>
+      <p>One email per week. New articles, implementation insights, and capital markets analysis &mdash; no noise, no vendor pitches.</p>
+      <form class="nl-form" onsubmit="handleNL(event)">
+        <input type="email" id="beehiiv-email" placeholder="your@email.com" required autocomplete="email"/>
+        <button type="submit" id="beehiiv-btn">Subscribe &rarr;</button>
+      </form>
+      <div id="beehiiv-msg" style="display:none;font-size:13px;margin-top:1rem;color:rgba(255,255,255,.65);"></div>
+    </div>
+  </section>
+  <footer class="pub-footer">
+    <p><a onclick="go('home')">linkware.org</a> &nbsp;&middot;&nbsp; Capital Markets, Engineered &nbsp;&middot;&nbsp; <a onclick="goAdmin()">Admin</a></p>
+  </footer>
+</div>
+
+<div id="page-reader" class="page">
+
+  <nav class="pub-nav">
+    <a class="nav-logo" onclick="go('home')">Link<span>ware</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('home')">Home</a></li>
+      <li><a onclick="go('public')" style="color:var(--ink)">Insights</a></li>
+      <li><a onclick="go('services')">Services</a></li>
+      <li><a onclick="go('about')">About</a></li>
+      <li><a onclick="goNl()" class="nav-cta">Subscribe</a></li>
+    </ul>
+    <button class="ham" onclick="openDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="reader-wrap">
+    <div class="rdr-back" onclick="go('public')">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10 7H4M6 4L3 7l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to all articles
+    </div>
+    <div id="reader-content"></div>
+  </div>
+  <footer class="pub-footer"><p><a onclick="go('public')">linkware.org</a> &nbsp;&middot;&nbsp; Capital Markets, Engineered</p></footer>
+
+</div>
+
+<div id="page-services" class="page">
+
+  <nav class="pub-nav">
+    <a class="nav-logo" onclick="go('home')">Link<span>ware</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('home')">Home</a></li>
+      <li><a onclick="go('public')">Insights</a></li>
+      <li><a onclick="go('services')" style="color:var(--ink)">Services</a></li>
+      <li><a onclick="go('about')">About</a></li>
+      <li><a onclick="go('about')" class="nav-cta">Get in touch</a></li>
+    </ul>
+    <button class="ham" onclick="openDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="svc-hero">
+    <div class="eyebrow">What we do</div>
+    <h1>Specialist services for <em>complex</em> capital markets projects</h1>
+    <p>From initial scoping through to post-go-live stabilisation &mdash; Linkware provides hands-on consulting across the full implementation lifecycle, with deep expertise in derivatives, fixed income, and commodities.</p>
+  </div>
+  <div style="max-width:1200px;margin:0 auto;padding:3rem 2rem 0;">
+    <div class="svc-grid">
+      <div class="svc-card"><div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="3" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 8h8M7 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3>Implementation consulting</h3><p>End-to-end programme management and delivery consulting for trading and risk system implementations.</p><ul><li>Programme governance and delivery framework design</li><li>Requirements gathering and functional specification</li><li>Stakeholder management across front office, IT, and operations</li><li>Milestone tracking, risk identification, and escalation management</li><li>Cutover planning and go-live execution</li></ul></div>
+      <div class="svc-card"><div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M11 7v4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3>System configuration &amp; setup</h3><p>Hands-on configuration of trading platforms and risk systems across rates, FX, credit, fixed income, and commodities.</p><ul><li>Instrument and product setup across all asset classes</li><li>Trade booking model design and configuration</li><li>Reference data architecture and static data management</li><li>Workflow and lifecycle configuration</li><li>Interface design and integration support</li></ul></div>
+      <div class="svc-card"><div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 16l4-4 3 3 4-5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="3" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/></svg></div><h3>UAT management</h3><p>Rigorous, structured UAT programmes that go beyond surface testing, covering edge cases and exception flows.</p><ul><li>UAT strategy design and test plan development</li><li>Test script authoring covering full trade lifecycle</li><li>Defect management and root cause triage</li><li>Business tester coordination and support</li><li>Sign-off facilitation and formal UAT closure</li></ul></div>
+      <div class="svc-card"><div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M12 3L4 13h7l-1 6 8-10h-7l1-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>Project rescue &amp; recovery</h3><p>When a programme has lost direction &mdash; Linkware steps in with an objective assessment and a clear recovery plan.</p><ul><li>Independent programme health assessment</li><li>Root cause analysis of delivery failures</li><li>Recovery plan design and stakeholder re-engagement</li><li>Interim programme management through stabilisation</li><li>Post-recovery handover and knowledge transfer</li></ul></div>
+      <div class="svc-card svc-full"><div class="svc-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="9" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6M16 6a3 3 0 010 6M19 19c0-2.761-1.343-5-3-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3>Training &amp; workshops</h3><p>Practical, outcome-oriented training designed for capital markets teams. Whether you need to upskill a project team before go-live, onboard operations staff, or run a discovery workshop with senior stakeholders.</p><ul><li>System training for front office, operations, and IT teams</li><li>Discovery and requirements workshops</li><li>Trade lifecycle and booking model workshops</li><li>Post-go-live knowledge transfer sessions</li></ul></div>
+    </div>
+  </div>
+  <div class="process-wrap">
+    <h2>How we work</h2>
+    <p class="process-lead">Every engagement follows the same five-stage approach &mdash; structured enough to deliver consistency, flexible enough to fit your context.</p>
+    <div class="process-steps">
+      <div class="proc-step"><div class="proc-num">01</div><div class="proc-title">Scoping call</div><div class="proc-body">We understand your challenge, timeline, and constraints &mdash; no charge, no obligation.</div></div>
+      <div class="proc-step"><div class="proc-num">02</div><div class="proc-title">Proposal</div><div class="proc-body">A clear scope of work, timeline, and commercial terms &mdash; straightforward and specific.</div></div>
+      <div class="proc-step"><div class="proc-num">03</div><div class="proc-title">Mobilisation</div><div class="proc-body">Fast onboarding. We integrate with your team and existing processes within days.</div></div>
+      <div class="proc-step"><div class="proc-num">04</div><div class="proc-title">Delivery</div><div class="proc-body">Hands-on execution with regular progress updates and transparent issue management.</div></div>
+      <div class="proc-step"><div class="proc-num">05</div><div class="proc-title">Handover</div><div class="proc-body">Clean transition with full documentation and knowledge transfer to your team.</div></div>
+    </div>
+  </div>
+  <div class="svc-cta">
+    <h2>Let&rsquo;s discuss your project</h2>
+    <p>Tell us about your implementation challenge and we&rsquo;ll come back with a clear view on how Linkware can help.</p>
+    <span class="btn btn-dark" onclick="go('about')">Get in touch &rarr;</span>
+  </div>
+  <footer class="pub-footer">
+    <p><a onclick="go('home')">linkware.org</a> &nbsp;&middot;&nbsp; Capital Markets, Engineered &nbsp;&middot;&nbsp; <a onclick="goAdmin()">Admin</a></p>
+  </footer>
+</div>
+
+<div id="page-about" class="page">
+
+  <nav class="pub-nav">
+    <a class="nav-logo" onclick="go('home')">Link<span>ware</span></a>
+    <ul class="nav-links">
+      <li><a onclick="go('home')">Home</a></li>
+      <li><a onclick="go('public')">Insights</a></li>
+      <li><a onclick="go('services')">Services</a></li>
+      <li><a onclick="go('about')" style="color:var(--ink)">About</a></li>
+      <li><a onclick="go('about')" class="nav-cta">Get in touch</a></li>
+    </ul>
+    <button class="ham" onclick="openDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="abt-hero">
+    <div class="abt-text">
+      <div class="eyebrow">About Linkware</div>
+      <h1>Built on a decade of <em>real</em> delivery</h1>
+      <p>Linkware is a capital markets technology consultancy founded on a simple premise: that the best implementation advice comes from people who have actually done the work &mdash; not from slide decks and methodology frameworks.</p>
+      <p>With over ten years of hands-on experience delivering trading and risk system programmes for banks, asset managers, and fintech firms, we bring practical expertise to the full implementation lifecycle. Our work spans derivatives across rates, FX, and credit, fixed income, and commodities.</p>
+      <p>We are not a large consultancy with generalist teams. We are a specialist practice &mdash; which means you get experienced, senior people on your engagement, every time.</p>
+    </div>
+    <div class="abt-visual">
+      <div class="abt-stat"><div class="abt-num">10+</div><div class="abt-lbl">Years of capital markets technology delivery</div></div>
+      <div class="abt-stat"><div class="abt-num">3</div><div class="abt-lbl">Core asset class specialisms: derivatives, fixed income &amp; commodities</div></div>
+      <div class="abt-stat"><div class="abt-num">5</div><div class="abt-lbl">Service lines covering the complete implementation lifecycle</div></div>
+      <div class="abt-stat"><div class="abt-num">F2B</div><div class="abt-lbl">Front-to-back coverage: trading, risk, operations &amp; finance</div></div>
+    </div>
+  </div>
+  <div class="vals-wrap">
+    <h2>How we think</h2>
+    <p class="vals-lead">Three principles that shape every Linkware engagement &mdash; from initial scoping call to final handover.</p>
+    <div class="vals-grid">
+      <div class="val-item"><div class="val-title">Honesty before comfort</div><div class="val-body">We tell clients what they need to hear, not what they want to hear. If a timeline is unrealistic, a scope is under-defined, or a go-live decision is premature &mdash; we say so. Clearly, and early.</div></div>
+      <div class="val-item"><div class="val-title">Expertise over process</div><div class="val-body">Methodology frameworks have their place. But no framework substitutes for someone who has been in the room when a migration goes wrong at midnight before go-live. Experience is the product.</div></div>
+      <div class="val-item"><div class="val-title">Outcomes over outputs</div><div class="val-body">Documents, decks, and deliverables are means to an end. The end is a system in production, working as intended, used with confidence by the people it was built for. That is the only measure that matters.</div></div>
+    </div>
+  </div>
+  <div class="exp-wrap">
+    <div class="exp-inner">
+      <h2>Areas of expertise</h2>
+      <p>A decade of work across capital markets technology leaves you with a specific, hard-won set of capabilities. These are ours.</p>
+      <div class="exp-tags">
+        <span class="exp-tag">Trading system implementation</span><span class="exp-tag">Derivatives &mdash; rates, FX &amp; credit</span><span class="exp-tag">Fixed income &amp; bonds</span><span class="exp-tag">Commodities</span><span class="exp-tag">Trade lifecycle management</span><span class="exp-tag">UAT design &amp; execution</span><span class="exp-tag">Data migration</span><span class="exp-tag">Reference data architecture</span><span class="exp-tag">Front-to-back integration</span><span class="exp-tag">Risk system configuration</span><span class="exp-tag">Functional specification</span><span class="exp-tag">Cutover planning</span><span class="exp-tag">Post-go-live stabilisation</span><span class="exp-tag">Project rescue &amp; recovery</span><span class="exp-tag">Stakeholder management</span><span class="exp-tag">Training &amp; knowledge transfer</span>
+      </div>
+    </div>
+  </div>
+  <div class="ctc-wrap">
+    <h2>Get in touch</h2>
+    <p>Tell us about your project or challenge. We respond to every enquiry within one business day.</p>
+    <form class="cf" id="contact-form" onsubmit="handleContact(event)">
+      <div class="cf-row">
+        <div class="cf-fld"><label class="cf-lbl">Name</label><input type="text" name="name" class="cf-inp" placeholder="Your name" required/></div>
+        <div class="cf-fld"><label class="cf-lbl">Organisation</label><input type="text" name="org" class="cf-inp" placeholder="Bank, firm or company"/></div>
+      </div>
+      <div class="cf-fld"><label class="cf-lbl">Email</label><input type="email" name="email" class="cf-inp" placeholder="your@email.com" required/></div>
+      <div class="cf-fld"><label class="cf-lbl">What are you looking for?</label>
+        <select name="service" class="cf-inp"><option value="">Select a service&hellip;</option><option>Implementation consulting</option><option>System configuration &amp; setup</option><option>UAT management</option><option>Training &amp; workshops</option><option>Project rescue / recovery</option><option>General enquiry</option></select>
+      </div>
+      <div class="cf-fld"><label class="cf-lbl">Tell us about your project</label><textarea name="message" class="cf-ta" placeholder="Brief description of your situation, timeline, and what you need&hellip;" required></textarea></div>
+      <button type="submit" class="btn btn-dark" id="cf-sub">Send message &rarr;</button>
+      <div class="cf-ok" id="cf-ok">Thank you &mdash; your message has been received. We will be in touch within one business day.</div>
+      <div class="cf-err" id="cf-err"></div>
+    </form>
+  </div>
+  <footer class="pub-footer">
+    <p><a onclick="go('home')">linkware.org</a> &nbsp;&middot;&nbsp; Capital Markets, Engineered &nbsp;&middot;&nbsp; <a onclick="goAdmin()">Admin</a></p>
+  </footer>
+</div>
+
+<div id="page-login" class="page">
+
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">Link<span>ware</span></div>
+      <p class="login-sub">Admin &mdash; sign in to continue</p>
+      <div class="adm-fld">
+        <label class="a-lbl">Password</label>
+        <input type="password" class="a-inp" id="login-pw" placeholder="Enter password"/>
+        <div class="login-err" id="login-err">Incorrect password</div>
+      </div>
+      <button class="a-btn" onclick="doLogin()">Sign in</button>
+      <button class="a-btn a-btn-ghost" onclick="go('home')">Back to site</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="page-admin" class="page">
+
+  <div class="adm-shell">
+    <aside class="adm-sb">
+      <div class="adm-sb-logo">Link<span>ware</span></div>
+      <nav class="adm-nav">
+        <div class="adm-ni active" id="nav-articles" onclick="admNav('articles')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="7" width="8" height="2" rx="1" fill="currentColor" opacity=".4"/><rect x="2" y="11" width="10" height="2" rx="1" fill="currentColor" opacity=".4"/></svg>
+          Articles
+        </div>
+        <div class="adm-ni" id="nav-new" onclick="admNav('new')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          New article
+        </div>
+        <div class="adm-ni" id="nav-messages" onclick="admNav('messages')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 6l7 4 7-4" stroke="currentColor" stroke-width="1.3"/></svg>
+          Messages <span id="msg-badge" style="display:none;background:var(--admdan);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;"></span>
+        </div>
+        <div class="adm-ni" id="nav-settings" onclick="admNav('settings')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M13 3l-1.5 1.5M4.5 11.5L3 13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Settings
+        </div>
+      </nav>
+      <div class="adm-sb-foot">
+        <div class="adm-ni" onclick="admLogout()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Sign out
+        </div>
+        <div style="font-size:11px;color:var(--admm);padding:8px 12px 0;cursor:pointer;" onclick="go('home')">Back to site</div>
+      </div>
+    </aside>
+    <main class="adm-main" id="adm-main-content"></main>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ── STORAGE ──
+var STORAGE_KEY = 'lw_articles';
+var SETTINGS_KEY = 'lw_settings';
+var SESSION_KEY = 'lw_session';
+
+const DEFAULT_ARTICLES = [
+  {
+    id: 'phases-2025',
+    title: 'The 5 phases of a trading system implementation — and where most projects fail',
+    category: 'implementation',
+    excerpt: 'Discovery, design, build, UAT, go-live. Five phases every implementation follows — and five distinct points where projects go wrong.',
+    body: `## Overview
+
+Most trading system implementations follow a recognisable pattern. Five distinct phases, a familiar cast of stakeholders, and a project plan that looks perfectly reasonable on paper. Yet a significant proportion of these projects run late, over budget, or deliver something materially different from what was originally agreed.
+
+## Phase 1: Discovery & scoping
+
+Every implementation begins with discovery — a period of structured workshops, document reviews, and stakeholder interviews designed to answer one fundamental question: what exactly are we building?
+
+The project team maps current state: existing systems, data flows, booking models, instrument coverage, regulatory reporting obligations, and the downstream dependencies that nobody documented when the last system was installed fifteen years ago.
+
+> **Where projects fail here:** Discovery is routinely rushed. Commercial pressure to start billing for build work means many projects move into design before the scope is genuinely stable. These gaps resurface in UAT as defects.
+
+## Phase 2: Design & configuration
+
+With requirements in hand, the project moves into design. Abstract requirements become concrete decisions: how instruments will be set up, how the trade booking model will work, how positions will be calculated, and how the platform will connect to the surrounding ecosystem.
+
+> **Where projects fail here:** Design documents are often written by people who understand the system but not the business. The result is a specification that is technically coherent but commercially wrong — and this isn't discovered until build is already underway.
+
+## Phase 3: Build & integration
+
+Build is where the project becomes real. Configuration is applied, custom development is written, and the system starts to take shape. Interfaces are built and tested. Data migration work runs in parallel.
+
+> **Where projects fail here:** Integration testing is where the gaps in discovery and design manifest as defects. Data migration reveals the source data is far messier than anyone acknowledged. Each issue is solvable — but each takes time.
+
+## Phase 4: User acceptance testing (UAT)
+
+UAT is the phase in which the business takes ownership of testing and confirms that the system meets their requirements. It culminates in a formal sign-off that clears the project to proceed to go-live.
+
+> **Where projects fail here:** UAT is the single most common phase for projects to lose control. Business testers are under-resourced, test scripts are superficial, and there is intense pressure to close defects quickly rather than investigate properly.
+
+## Phase 5: Go-live & stabilisation
+
+Go-live is the moment the new system takes over from legacy and begins processing live business. Day one is never quiet. The stabilisation period — typically four to eight weeks — is the time required for the system and its users to settle into sustainable operation.
+
+> **Where projects fail here:** Cutover failures happen when data migration doesn't complete cleanly. Stabilisation failures happen when post-go-live defect volume exceeds what the support team can absorb.
+
+## Summary
+
+The highest-risk phases are the bookends — discovery and go-live — with UAT in between. The pattern that underpins most failures is not technical: it is systematic underinvestment in the phases that are hardest to show progress on.`,
+    status: 'published',
+    date: '2025-01-01',
+    readTime: '8'
+  }  ,
+  {
+    id: 'uat-lying-2025',
+    title: 'Why your UAT environment is lying to you',
+    category: 'implementation',
+    excerpt: 'UAT passes, production explodes. The classic capital markets project story — and five reasons why test environments never truly reflect what happens on go-live day.',
+    body: `## The false comfort of a green test run
+
+There is a moment on almost every capital markets implementation when the project manager stands up in the steering committee and says the words: "UAT has passed." The room relaxes. The go-live date is confirmed. And then, three days after go-live, something breaks in production that nobody saw coming.
+
+This is not bad luck. It is a structural problem with the way UAT environments are built and run — and it repeats itself on project after project because the underlying causes are never properly addressed.
+
+Here are the five most common reasons your UAT environment is lying to you.
+
+## 1. The data is too clean
+
+UAT environments are typically loaded with a curated subset of data — instruments that have been set up correctly, counterparties that exist in all the right reference tables, trades that follow the happy path. Nobody loads the 2009 legacy bond that was booked under three different instrument IDs, or the FX swap where the confirmation template was customised six years ago by someone who has since left.
+
+Production data is messy. It has exceptions, workarounds, and historical artefacts that accumulate over years of live operation. UAT data reflects none of this. When the messy production data hits the new system on go-live day, the gaps appear immediately.
+
+Run at least one round of testing against a full production data extract, not a curated sample. The uglier the data, the more valuable the test.
+
+## 2. The volumes are too low
+
+A booking workflow that takes two seconds to complete with fifty trades in the queue will behave very differently with fifty thousand. Interface feeds that process cleanly in a test environment will start dropping or duplicating messages at production volumes. Database queries that are fast against a test dataset will time out against a full production history.
+
+UAT almost never tests at realistic volume. The infrastructure cost of running production-scale load tests is high, the time required is significant, and the project schedule rarely accommodates it. So nobody tests at scale, and the performance issues surface on day one of live operation.
+
+Insist on at least one volume test at 150% of expected peak load before go-live sign-off. It will find things nothing else will.
+
+## 3. The interfaces are stubbed or simplified
+
+In a typical UAT environment, some interfaces connecting to external systems — clearing houses, market data vendors, regulatory reporting platforms — are either stubbed with mock responses or connected to vendor test environments that do not behave identically to production.
+
+The result is that the interface works in UAT, but subtle differences between the test and production versions mean the real interface behaves differently when it matters. Message formats, timing, error handling, retry logic — all of these can have edge cases that only appear against the real production endpoint.
+
+Identify every interface that has a production/test discrepancy and explicitly document the known gaps before anyone signs off UAT.
+
+## 4. The users are testing what they know
+
+Business testers in UAT are human beings with busy day jobs. They test the flows they understand — the standard trade booking, the usual settlement instruction, the report they run every morning. They do not naturally seek out the edge cases, the exception workflows, or the scenarios that only happen once a quarter.
+
+Explicitly write test scripts for exception flows — failed settlements, booking errors, late confirmations, cancelled trades, instrument setup gaps. These are the scenarios that will cause incidents in production.
+
+## 5. The environment is not maintained between test cycles
+
+UAT runs over multiple cycles. Between each cycle, the environment should be refreshed: data reloaded, configuration updates applied, interface stubs reset. In practice, this rarely happens consistently.
+
+The result is an environment that has accumulated the side effects of previous test runs. Testers in cycle three are testing against an environment that no longer reflects a clean starting position.
+
+Treat environment refresh as a formal deliverable between each UAT cycle, with its own checklist and sign-off.
+
+## The honest conclusion
+
+Passing UAT is a necessary condition for go-live, but it is not a sufficient one. It tells you that the system behaves correctly in a controlled environment with clean data, low volumes, simplified interfaces, and familiar test cases.
+
+Production is none of those things. The teams that go live successfully are the ones that understand this distinction.`,
+    status: 'published',
+    date: '2025-01-15',
+    readTime: '7'
+  }  ,
+  {
+    id: 'data-migration-2025',
+    title: 'Data migration in financial systems: the checklist no one gives you',
+    category: 'implementation',
+    excerpt: 'Instrument reference data, trade history, position reconciliation, cutover day. The complete data migration guide that every implementation team needs but nobody writes down.',
+    body: `## Why data migration is always harder than the plan says
+
+Ask any project manager who has delivered a trading system implementation what surprised them most, and a significant proportion will say the same thing: the data migration.
+
+It is not that data migration is technically complex — though it can be. It is that the true scope of it is almost never understood at the start of a project. The discovery phase estimates a few weeks of data mapping work. The build phase reveals that the source data has problems nobody knew about. The UAT phase finds that the migrated data does not reconcile with the legacy system.
+
+This is the checklist that should exist at the start of every project.
+
+## Part 1: Reference data
+
+Reference data is the foundation everything else depends on. If your instruments, counterparties, and static data are not set up correctly in the new system, nothing that references them will work.
+
+**Instrument and product static data**
+- Map every instrument type in the legacy system to the equivalent in the new platform
+- Identify instruments that have no direct equivalent and require manual configuration
+- Validate ISIN, CUSIP, SEDOL, and other identifier mappings
+- Check currency and day count convention mappings
+- Verify pricing source configuration for each instrument type
+- Confirm settlement instruction templates are correctly associated
+
+**Counterparty and entity data**
+- Extract full counterparty list including all aliases
+- Map legal entity identifiers (LEI) to new system counterparty records
+- Validate SWIFT/BIC codes and settlement account details
+- Check credit limit and exposure configurations
+- Confirm ISDA master agreement mappings
+
+**Calendar and market data**
+- Validate holiday calendars for all relevant markets and currencies
+- Check fixing source configurations for floating rate instruments
+- Confirm exchange and venue reference data
+
+## Part 2: Trade and position history
+
+**Defining the migration scope**
+
+Before a single trade is migrated, the scope must be formally agreed:
+
+- What is the cutover date — what constitutes a live trade versus historical?
+- Which books and portfolios are in scope?
+- What is the earliest booking date for historical trades?
+- Are cancelled and matured trades being migrated, or live positions only?
+- How will novated or amended trades be represented?
+
+These decisions sound straightforward. In practice they generate significant debate, and the answers have material implications for the migration workload.
+
+**Trade data extraction**
+- Extract full trade population from legacy system in agreed scope
+- Validate trade counts by book, asset class, and instrument type
+- Identify trades with missing or incomplete data fields
+- Flag trades that require manual review before migration
+- Document known data quality issues with agreed remediation approach
+
+**Position reconciliation**
+- Reconcile migrated positions to legacy system end-of-day positions
+- Agree acceptable tolerance thresholds for reconciliation breaks
+- Establish a formal process for investigating and resolving breaks
+- Get formal sign-off on residual breaks before go-live proceeds
+
+## Part 3: The cutover plan
+
+**Cutover rehearsal**
+- Run at least two full cutover rehearsals before the real event
+- Time every step and build the timing into the production plan
+- Identify steps that can run in parallel versus those that must be sequential
+- Define explicit go/no-go decision points with agreed criteria
+- Assign named owners to every step in the plan
+
+**Cutover day checklist**
+- Freeze legacy system at agreed time — no new bookings after cutover start
+- Run final position extract from legacy system
+- Execute data migration scripts in agreed sequence
+- Run automated reconciliation between migrated data and legacy extract
+- Investigate and resolve reconciliation breaks within agreed tolerance
+- Complete manual data entry for items that could not be automated
+- Run system health checks on new platform
+- Confirm all interfaces are connected and processing
+- Get formal sign-off from each business area before market open
+
+**Rollback plan**
+- Document the rollback trigger — what level of issue requires reverting to legacy?
+- Confirm the legacy system remains operational until rollback window closes
+- Assign a named individual with authority to call a rollback
+- Test the rollback procedure before cutover day
+
+## Part 4: Post-migration validation
+
+Migration is not complete when the data is loaded. It is complete when the data has been validated in production.
+
+- Run the opening position report and reconcile to expectation
+- Confirm all pricing feeds are working and instruments are marking correctly
+- Validate P&L attribution for a sample of positions
+- Confirm regulatory reporting is generating correctly from migrated data
+- Run end-of-day processing and validate the output
+
+The teams that get data migration right are not the ones with the best technical skills. They are the ones that start early, involve the business in data quality remediation, rehearse the cutover until it is routine, and treat post-migration validation as a formal deliverable.`,
+    status: 'published',
+    date: '2025-01-22',
+    readTime: '10'
+  }  ,
+  {
+    id: 'go-live-war-room-2025',
+    title: 'The go-live war room: what actually happens on day one',
+    category: 'implementation',
+    excerpt: 'The calls, the P&L breaks, the war room at 6am. An honest account of what the first day of a trading system go-live really looks like — and how to survive it.',
+    body: `## 5:45am
+
+The war room is already half full when you arrive. Someone has set up a shared screen showing the system health dashboard. Two developers are at the back with laptops open, monitoring interface logs. The operations lead is on a call with the overnight team in another time zone, getting the handover summary.
+
+There is coffee. There is always coffee.
+
+This is go-live day. And it looks nothing like the project plan said it would.
+
+## What the project plan says
+
+The project plan for go-live day is a model of order. Tasks are sequenced. Owners are assigned. There are checkpoints and sign-offs. The critical path runs from 6am system start through to market open at 8am, with two hours of buffer built in.
+
+The plan was written three months ago by people who had not yet discovered the seventeen data quality issues, the interface that does not behave the same way in production as it did in UAT, or the business user who has been on annual leave for the entire UAT period and is going to encounter the new system for the first time this morning.
+
+## What actually happens
+
+**06:00 — System start**
+
+The new system comes up cleanly. This is genuinely good news. The first thirty minutes are often the calmest part of the day.
+
+**06:30 — First positions appear**
+
+The overnight position load completes. Someone runs the opening position report and immediately notices that one book is showing a position that does not match the legacy system. Investigation begins. It turns out to be a migration issue with a specific bond that had two active ISINs in the legacy system. It takes forty-five minutes to resolve. The buffer is now down to seventy-five minutes.
+
+**07:15 — Interface issue**
+
+The pricing feed for one asset class is not updating. The interface is connected and apparently sending messages, but the prices are not moving. The developers trace it to a field mapping issue that was not present in UAT because the UAT pricing vendor used a slightly different message format. A fix is deployed. The prices start moving. The buffer is gone.
+
+**07:55 — Market open is five minutes away**
+
+There is a brief, charged silence in the war room. Everyone is looking at the dashboard. The system is running. The critical positions are showing correctly. The interfaces are live. The decision is made to proceed.
+
+**08:00 — Market open**
+
+The first trades start coming through. For approximately twenty minutes, everything works exactly as it should. And then the first support ticket arrives.
+
+## The support ticket tsunami
+
+No matter how well-prepared a go-live is, the first day generates a volume of support tickets that exceeds what the team expects. The tickets fall into three categories:
+
+**Category 1: User confusion** — traders and operations staff encountering workflows that work differently from the legacy system. These are not defects. They are change management gaps. The resolution is a quick explanation or a five-minute walkthrough.
+
+**Category 2: Data issues** — records that were not migrated correctly, instruments that are not set up as expected. Some of these were known before go-live and accepted. Some are new discoveries.
+
+**Category 3: Genuine defects** — system behaviour that is incorrect and needs to be fixed. On a well-prepared go-live, these should be relatively few.
+
+The triage function — the person or team that assesses incoming tickets, categorises them, and routes them to the right resolution owner — is the most important function in the war room. If triage breaks down, everything breaks down.
+
+## The P&L conversation
+
+At some point during the morning — usually around 10am — someone from the front office will say that their P&L does not look right.
+
+P&L differences between old and new systems on day one are common and are not always defects. They can reflect differences in pricing source or methodology, position differences from the migration, timing differences in end-of-day processing, or genuine calculation errors.
+
+The correct response is to investigate systematically, not to panic. Most day-one P&L differences have an explanation that does not involve a system defect.
+
+## What separates a good go-live from a bad one
+
+The technical outcome of a go-live is determined months before the day itself — by the quality of the requirements, the rigour of the testing, and the thoroughness of the cutover rehearsals.
+
+But the experience of go-live day is determined by three things:
+
+**Communication.** Regular, honest updates to stakeholders throughout the day. Not spin, not reassurance, but factual status updates that tell people what is happening and what is being done about it.
+
+**Triage.** A clear, fast process for categorising and routing support tickets. Without it, the war room becomes a bottleneck and issues queue up unresolved.
+
+**Authority.** Someone in the room with the authority to make decisions — to accept a workaround, to escalate to a rollback, to call in additional resource. Go-live day is not the time for decisions by committee.
+
+Get those three things right and even a difficult go-live becomes manageable.`,
+    status: 'published',
+    date: '2025-01-29',
+    readTime: '8'
+  }  ,
+  {
+    id: 'getting-into-consulting-2025',
+    title: 'How I got into capital markets technology consulting',
+    category: 'career',
+    excerpt: 'The origin story behind Linkware — and what anyone considering a career in capital markets technology consulting should know before they start.',
+    body: `## It did not start with a plan
+
+Nobody grows up wanting to be a capital markets technology consultant. It is not a career that features prominently in university guidance sessions or graduate recruitment fairs. Most people who end up in this field arrived via a series of adjacent decisions that, in retrospect, seem inevitable — but at the time felt like improvisation.
+
+That is certainly how it happened at Linkware.
+
+## The starting point: being in the room
+
+The path into capital markets technology consulting almost always starts with proximity. You are working in or near a financial institution — in IT, in operations, in a project team, in a vendor organisation — and you find yourself in the room when something complex is being delivered. A system migration. A new trading platform. A regulatory change programme.
+
+You notice that the people who are most valued in that room are not necessarily the most technically brilliant or the most financially sophisticated. They are the ones who can translate between the two worlds — who understand enough about the business to know what the front office actually needs, and enough about the technology to know what is and is not possible.
+
+That translation skill is the core of capital markets technology consulting. And it is not taught anywhere. It is acquired by being in the room, repeatedly, over years.
+
+## What the first years actually look like
+
+The early years in this field are humbling. Every implementation exposes gaps in your knowledge. You will be in a workshop about rates derivatives booking models and realise you do not know what a cross-currency basis swap actually is. You will be reviewing an interface specification and not understand why the message format matters.
+
+This is normal. The correct response is to write it down, go away, and learn it. The people who progress quickly in this field are the ones who are genuinely curious about how capital markets work — not just the technology, but the instruments, the workflows, the economics, and the regulatory environment.
+
+The ones who struggle are the ones who try to stay in their lane. The IT person who does not want to understand the business. The finance person who dismisses the technology as someone else's problem. Capital markets technology consulting rewards generalists who go deep, not specialists who stay narrow.
+
+## The skills that actually matter
+
+After more than a decade in this field, these are the capabilities that consistently make the difference:
+
+**Trade lifecycle knowledge.** Understanding how a trade moves from execution through confirmation, clearing, settlement, and accounting is the single most valuable piece of domain knowledge in this field. It applies across asset classes, across systems, and across the entire implementation lifecycle.
+
+**The ability to write clearly.** Functional specifications, design documents, test scripts, status reports — this field generates an enormous volume of written material, and the quality of that material directly affects project outcomes. If you can write a clear, unambiguous functional requirement, you are more valuable than you know.
+
+**Stakeholder management.** Capital markets implementations involve people with very different perspectives — front office, operations, IT, finance, compliance, and external vendors — all with competing priorities. The ability to navigate that environment, build trust across organisational boundaries, and get people to decisions is the most underrated skill in the business.
+
+**Knowing what you do not know.** This sounds obvious. It is rarer than it should be. The consultants who cause the most damage are the ones who project confidence about things they do not understand. The ones who add the most value are the ones who are clear about the boundaries of their knowledge and ask good questions.
+
+## What Linkware is built on
+
+Linkware exists because there is a specific type of engagement — complex, cross-functional, high-stakes implementations in capital markets — where the right combination of domain knowledge, technical understanding, and delivery experience makes an enormous difference to the outcome.
+
+Not every firm needs this. But the ones that do need it badly. And that is the space Linkware was built to serve.
+
+If you are considering a career in this field, the advice is simple: get as close as you can to a live implementation, ask questions constantly, and never stop learning about how capital markets actually work. The rest follows.`,
+    status: 'published',
+    date: '2025-02-05',
+    readTime: '7'
+  }  ,
+  {
+    id: 'skills-gap-2025',
+    title: 'The skills gap banks do not advertise',
+    category: 'career',
+    excerpt: 'What job specifications say versus what hiring managers actually want. The real skills that get capital markets technology consultants hired, promoted, and rehired.',
+    body: `## What the job description says
+
+The job description for a capital markets technology consultant reads like a reasonable document. It asks for experience with trading systems. Knowledge of financial instruments. Project management skills. Strong communication.
+
+These requirements are real. They are also almost completely uninformative about what the role actually demands or what will make someone successful in it.
+
+The reason is that job descriptions are written to filter out obviously unsuitable candidates. They are not written to describe what excellent performance actually looks like. That knowledge lives in the heads of the people doing the hiring — and it is rarely written down.
+
+Here is what it actually looks like.
+
+## The front office exposure gap
+
+The single most consistent differentiator between good and excellent capital markets technology consultants is front office exposure. Not front office experience — most consultants in this space are not former traders. But exposure: the ability to sit with a derivatives trader or a fixed income portfolio manager, understand what they are trying to do, and translate that into something a technology team can build.
+
+This is a specific and learnable skill, but it requires time in front of front office users. Consultants who have spent their careers exclusively in middle office, operations, or pure IT delivery have a gap here that is very hard to paper over. They can write a functional specification. They cannot write a functional specification that the front office will actually sign off on.
+
+## Trade lifecycle depth
+
+Many consultants can describe the trade lifecycle at a high level — execution, confirmation, clearing, settlement, accounting. Fewer can describe it accurately for a specific instrument type in a specific market structure.
+
+What happens to an OTC interest rate swap between trade date and settlement? What are the confirmation requirements under EMIR? How does the clearing process work for an exchange-traded futures contract, and how does that differ from a bilaterally cleared OTC derivative?
+
+These questions have specific, technical answers. The consultants who know them are dramatically more useful — because they can validate requirements, spot errors in specifications, and have credible conversations with the front office without needing to be briefed first.
+
+## The functional specification test
+
+Here is a practical test that cuts through most CVs and interview performances: ask the candidate to walk you through how they would write the functional specification for a specific booking flow.
+
+Not in the abstract. For a specific instrument — say, a vanilla interest rate swap — with specific requirements: dual-currency, cleared through a central counterparty, with automated confirmation via an electronic messaging platform.
+
+The candidates who give you a generic answer about stakeholder workshops and requirements gathering are telling you something important. The ones who can walk you through the instrument setup, the booking model, the confirmation workflow, the clearing interface, and the accounting treatment are the ones worth hiring.
+
+## What actually gets people rehired
+
+Consulting relationships in capital markets tend to be long. Banks work with the same consultants and firms repeatedly, across multiple programmes, over years. The reason is simple: the onboarding cost for a complex implementation is very high, and once someone has demonstrated they can deliver in a specific environment, the risk calculus strongly favours bringing them back.
+
+The consultants who get rehired are the ones who:
+
+- Delivered what they said they would deliver, on time
+- Were honest when things were going wrong rather than managing upward
+- Left things better than they found them — documentation, processes, team capability
+- Were genuinely useful to the client team, not just to their own deliverables
+
+This sounds simple. It is not common.
+
+## The implication for career development
+
+If you are building a career in this field, the implication is clear: go deep on instrument knowledge and trade lifecycle, get as much front office exposure as you can, and practice writing clear functional specifications until it is effortless.
+
+The generic consulting skills — project management, stakeholder communication, presentation — are necessary but not sufficient. The differentiator in capital markets technology is domain depth.`,
+    status: 'published',
+    date: '2025-02-12',
+    readTime: '7'
+  }  ,
+  {
+    id: 'why-banks-fail-2025',
+    title: 'Banks keep buying new trading platforms for the same reason they fail',
+    category: 'insight',
+    excerpt: 'The real reasons trading system implementations fail are almost never technical. A frank assessment of the organisational patterns that repeat themselves across the industry.',
+    body: `## A familiar story
+
+A large financial institution decides to replace its front-to-back trading system. The existing platform is aging, expensive to maintain, and cannot support the new products the business wants to trade. A selection process is run. A vendor is chosen. A project is initiated.
+
+Three years later, the programme is eighteen months behind schedule, forty percent over budget, and has delivered roughly half of what was originally scoped. A post-implementation review is commissioned. Lessons are identified. Some are acted on. Most are not.
+
+Five years after that, the institution begins a new programme to replace the platform that was implemented in the previous programme.
+
+This cycle repeats across the industry with remarkable consistency. The technology changes — the platforms get more capable, the methodologies get more sophisticated — but the outcomes do not improve at the same rate.
+
+The reason is that the failures are not primarily technological.
+
+## Failure pattern 1: Requirements owned by the wrong people
+
+Trading system implementations fail most reliably when requirements are owned by IT rather than by the business.
+
+This seems counterintuitive. IT are the people who understand systems. But IT do not understand what the front office actually needs from a trading platform — how they want to see their risk, what the booking workflow needs to look like, which reports are genuinely used and which were requested ten years ago by someone who has since left. Only the front office understands that. And the front office is usually too busy trading to spend three months in requirements workshops.
+
+The result is a functional specification that is technically rigorous and commercially incomplete. The gaps emerge in UAT, when the front office engages with the system for the first time and discovers that it works correctly but not the way they work.
+
+By that point, the design is locked, the configuration is built, and changing anything meaningful requires a change request that the project cannot afford.
+
+## Failure pattern 2: The data problem discovered too late
+
+Every legacy trading system contains data that has been accumulating for years — instruments set up in non-standard ways, trades booked with workarounds, reference data that is inconsistent or incomplete. This data is usually not fully understood until someone tries to migrate it.
+
+The discovery typically happens in one of two places: in the data migration workstream when the extract and transform process reveals the quality issues, or in UAT when migrated data fails to reconcile with the legacy system.
+
+Either way, it is too late for the discovery to be cheap. The organisations that handle this well are the ones that run a serious data profiling exercise during discovery — before the project plan is baselined and before the go-live date is agreed.
+
+## Failure pattern 3: Change management treated as a communications exercise
+
+Every implementation project plan has a change management workstream. It usually consists of town halls, training sessions scheduled for the two weeks before go-live, and user guides that nobody reads.
+
+This is not change management. It is communications. And it is not enough.
+
+Real change management means understanding early how the new system will change the day-to-day workflows of the people who use it. It means involving those people in the design process, not just informing them of the outcome. It means building genuine capability in the user population before go-live, not just familiarity.
+
+The resistance to change that derails implementations is not usually dramatic. It is quiet. It is the trader who routes around the new system because the old way is faster. It is the operations team that maintains a parallel spreadsheet because they do not trust the new booking feed.
+
+## The uncomfortable conclusion
+
+The consistent finding of honest post-implementation reviews is that failed implementations were foreseeable. The risks were visible early. The data problems could have been identified in discovery. The requirements gaps could have been surfaced before the design was locked.
+
+The reason they were not addressed is usually the same: commercial pressure to start building before the full scope was understood, schedule pressure to maintain a go-live date agreed before the risks were known, and governance structures that rewarded the appearance of progress over honest risk reporting.
+
+New platforms will not fix this. Better implementation practice will.`,
+    status: 'published',
+    date: '2025-02-19',
+    readTime: '8'
+  }  ,
+  {
+    id: 'ai-hype-2025',
+    title: 'AI in capital markets: what is actually changing versus what is just hype',
+    category: 'insight',
+    excerpt: 'Where AI is making a genuine operational difference in capital markets, where it is still years away from being trusted by risk desks, and how to think about it as a practitioner.',
+    body: `## Two conversations about AI
+
+There are currently two parallel conversations happening about artificial intelligence in capital markets, and they bear almost no relation to each other.
+
+The first conversation happens at conferences and in vendor marketing materials. It features phrases like "transformative" and "paradigm shift." It describes a near-future in which AI handles trade surveillance, risk management, regulatory reporting, and client advisory.
+
+The second conversation happens in the operational trenches of banks and asset managers. It is more specific, more cautious, and more interesting. It describes individual use cases where AI is making a genuine difference today, alongside a clear-eyed assessment of where it is not yet trusted, not yet accurate enough, or not yet explainable enough to be used in regulated decision-making.
+
+The gap between these two conversations is where most of the genuine insight lives.
+
+## Where AI is making a real difference today
+
+**Trade surveillance and market abuse detection**
+
+This is probably the most mature and genuinely impactful use of AI in capital markets operations. The volume of trades, orders, and market data that needs to be monitored for potential market abuse is too large for rule-based systems to cover effectively. AI-based surveillance systems can identify patterns across large datasets that deterministic rules would miss, and they are generating fewer false positives than their predecessors.
+
+This is not hype. The major sell-side institutions have deployed these systems.
+
+**Document processing and trade confirmation**
+
+The processing of unstructured documents — trade confirmations, ISDA schedules, term sheets, regulatory filings — has historically been labour-intensive and error-prone. Natural language processing models are now capable of extracting structured data from these documents with accuracy levels that make automation viable for a significant proportion of the volume.
+
+**Reconciliation break investigation**
+
+AI systems that can analyse break patterns, identify root causes, and route breaks to the appropriate resolution team are reducing manual effort significantly across operations teams.
+
+## Where AI is not yet trusted
+
+**Risk model decision-making**
+
+Risk management in capital markets is subject to regulatory oversight, internal model validation requirements, and fiduciary obligations. Regulators require that risk models be explainable — that it is possible to describe why the model produced a particular output.
+
+Current AI systems, particularly deep learning models, are not explainable in the way regulators require. They can be accurate. They cannot be interrogated. Until the explainability problem is solved, AI will not be trusted for core risk model decision-making at regulated institutions.
+
+**Credit and counterparty decisions**
+
+Similar constraints apply to credit decisions. An AI system that recommends a credit limit based on patterns in training data, but cannot articulate the specific factors driving that recommendation, is not deployable in a regulated context.
+
+**Autonomous trade execution**
+
+Algorithmic trading has existed for decades. But there is a meaningful difference between a deterministic algorithm executing a defined strategy and an AI system making autonomous decisions based on learned patterns. The latter introduces model risk that most risk committees are not yet comfortable accepting.
+
+## How to think about it as a practitioner
+
+The most useful mental model is to think of AI as a tool for augmenting human decision-making in high-volume, pattern-recognition-dependent workflows — not as a replacement for human judgment in complex, context-dependent, or regulated decisions.
+
+Where the volume is high, the patterns are learnable, the outputs can be validated, and errors are recoverable — AI is genuinely transformative.
+
+Where the decisions are high-stakes, the regulatory requirements are specific, and errors are costly — AI is a research project, not a deployment decision.
+
+The practitioners who navigate this most effectively are the ones who resist both the hype and the reflexive dismissal. The technology is real and improving. The gap between what it can do in a research environment and what can be deployed in regulated production is also real.`,
+    status: 'published',
+    date: '2025-02-26',
+    readTime: '8'
+  }  ,
+  {
+    id: 't1-settlement-2025',
+    title: 'T+1 settlement: what it actually means for your middle and back office',
+    category: 'insight',
+    excerpt: 'The move to T+1 settlement is not just a deadline change. It compresses every post-trade workflow and exposes operational weaknesses that T+2 has been masking for years.',
+    body: `## More than a shorter deadline
+
+When regulators announced the move to T+1 settlement — requiring trades to settle one business day after execution rather than two — the initial reaction from many middle and back office teams was reassuringly simple: we just need to do everything faster.
+
+That framing is understandable and almost entirely wrong.
+
+T+1 is not a speed problem. It is a process design problem. The move from T+2 to T+1 cuts the post-trade processing window roughly in half, and that compression exposes every inefficiency, manual step, and exception-handling gap that T+2 has been providing buffer for.
+
+Teams that approach T+1 purely as a matter of working faster will fail. Teams that use it as a forcing function to redesign their post-trade processes will succeed — and will end up with operations that are more robust, more automated, and more scalable than what they had before.
+
+## What actually has to happen faster
+
+**Trade confirmation**
+
+Under T+2, a trade executed on Monday typically needs to be confirmed by end of Monday. Under T+1, confirmation needs to happen significantly faster, particularly for trades executed late in the day. For some trade types, same-day confirmation becomes effectively mandatory.
+
+The implication is that any confirmation process relying on end-of-day batch processing, manual email matching, or next-morning fax confirmation is now broken. Electronic confirmation platforms need to be fully deployed and used consistently across the counterparty population.
+
+**Settlement instruction matching**
+
+Settlement instructions need to be agreed between counterparties before the settlement deadline. Under T+2, there was usually enough time to resolve mismatches through normal operational workflow. Under T+1, a mismatch identified on the morning of T+1 may not leave enough time for resolution before the deadline.
+
+This means settlement instruction databases need to be accurate and up to date — not a given for many institutions whose SSI data is managed through a combination of manual spreadsheets, vendor databases, and bilateral agreements of variable quality.
+
+**Fails management**
+
+Under T+1, a failed trade has less time to be resolved before generating costs and regulatory reporting obligations. The buy-in process can be triggered more quickly. The cost of fails increases.
+
+This is one of the places where T+1 has the most direct financial impact. Institutions with high fail rates under T+2 will see those costs compound under T+1.
+
+## The exception handling problem
+
+Most post-trade operations teams spend a disproportionate amount of time on exceptions — the trades that do not process cleanly through the standard workflow. Under T+2, exceptions can often be resolved within the settlement window. Under T+1, the same exceptions may not be resolved in time.
+
+The response cannot simply be to add headcount to exception management. There is not enough time in the T+1 window for a manual process to keep pace with volume.
+
+The real response is to reduce the exception rate — through better data quality, better counterparty data management, better confirmation workflows, and better integration between trading systems and post-trade platforms.
+
+## What T+1 exposes
+
+The operational weaknesses that T+1 exposes have been present for years. T+2 provided enough buffer that they could be managed through manual intervention. T+1 removes that buffer.
+
+In particular, T+1 exposes:
+
+**Data quality gaps.** Incorrect counterparty settlement instructions, instrument identifiers that do not match across systems, account details that have not been updated. These cause exceptions. Exceptions cause fails. Fails cost money.
+
+**Manual processing steps.** Any step in the post-trade workflow that requires a human to read something, make a decision, and type into a system is now a potential bottleneck.
+
+**System integration gaps.** The number of spreadsheets and manual extracts that exist between trading systems and post-trade platforms in most financial institutions is striking. T+1 makes the cost of these gaps visible.
+
+## The strategic opportunity
+
+Institutions that use T+1 as a forcing function to address these structural issues will end up with operations that are genuinely better — faster, more automated, more resilient, and more scalable.
+
+The ones that approach it as a compliance exercise will meet the initial deadline and then continue to experience elevated fail rates and higher costs.
+
+T+1 is hard. It is also an opportunity to fix things that should have been fixed years ago.`,
+    status: 'published',
+    date: '2025-03-05',
+    readTime: '9'
+  }
+];
+
+var DEFAULT_SETTINGS = {
+  password: 'linkware2025',
+  siteTitle: 'Linkware',
+  siteTagline: 'Capital Markets, Engineered'
+};
+
+function loadArticles() {
+  try { var r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : DEFAULT_ARTICLES; }
+  catch(e) { return DEFAULT_ARTICLES; }
+}
+function saveArticles(a) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(a)); } catch(e) {}
+}
+function loadSettings() {
+  try { var r = localStorage.getItem(SETTINGS_KEY); return r ? JSON.parse(r) : DEFAULT_SETTINGS; }
+  catch(e) { return DEFAULT_SETTINGS; }
+}
+function saveSettings(s) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch(e) {}
+}
+
+var ARTICLES = loadArticles();
+var SETTINGS = loadSettings();
+var pubFilter = 'all';
+var pubSearch = '';
+var editingId = null;
+var edStatus = 'draft';
+
+// ── ROUTING ──
+function go(name) {
+  closeDrawer();
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  var pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goNl() {
+  go('public');
+  setTimeout(function(){
+    var el = document.getElementById('nl-section');
+    if (el) el.scrollIntoView({behavior:'smooth'});
+  }, 150);
+}
+function goAdmin() {
+  if (sessionStorage.getItem(SESSION_KEY) === 'true') { go('admin'); admNav('articles'); }
+  else go('login');
+}
+
+// ── MOBILE DRAWER ──
+function openDrawer() {
+  var d = document.getElementById('drawer');
+  if (d) d.classList.add('open');
+  document.querySelectorAll('.ham').forEach(function(b){ b.classList.add('open'); });
+}
+function closeDrawer() {
+  var d = document.getElementById('drawer');
+  if (d) d.classList.remove('open');
+  document.querySelectorAll('.ham').forEach(function(b){ b.classList.remove('open'); });
+}
+
+// ── AUTH ──
+function doLogin() {
+  var pw = document.getElementById('login-pw');
+  var err = document.getElementById('login-err');
+  if (!pw) return;
+  if (pw.value === SETTINGS.password) {
+    sessionStorage.setItem(SESSION_KEY, 'true');
+    if (err) err.style.display = 'none';
+    pw.value = '';
+    go('admin');
+    admNav('articles');
+    setTimeout(checkUnread, 600);
+  } else {
+    if (err) err.style.display = 'block';
+    pw.value = '';
+  }
+}
+function admLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  go('home');
+}
+
+// ── ADMIN NAV ──
+function admNav(section) {
+  document.querySelectorAll('.adm-ni').forEach(function(n){ n.classList.remove('active'); });
+  var el = document.getElementById('nav-' + section);
+  if (el) el.classList.add('active');
+  if (section === 'articles') renderAdmArticles();
+  else if (section === 'new') { editingId = null; renderEditor(null); }
+  else if (section === 'messages') loadMessages();
+  else if (section === 'settings') renderAdmSettings();
+}
+
+// ── ADMIN: ARTICLES ──
+function catLabel(c) {
+  return {implementation:'Implementation', career:'Career & consulting', insight:'Industry insight'}[c] || c;
+}
+function escHtml(s) {
+  if (!s) return '';
+  var r = String(s);
+  r = r.split('&').join('&#38;');
+  r = r.split('<').join('&#60;');
+  r = r.split('>').join('&#62;');
+  r = r.split('"').join('&#34;');
+  return r;
+}
+function renderAdmArticles() {
+  var pub = ARTICLES.filter(function(a){ return a.status === 'published'; }).length;
+  var dft = ARTICLES.filter(function(a){ return a.status === 'draft'; }).length;
+  var rows = ARTICLES.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;padding:3rem;color:var(--admm);">No articles yet.</td></tr>'
+    : ARTICLES.map(function(a) {
+        var statusLabel = a.status === 'published' ? 'Published' : 'Draft';
+        var toggleLabel = a.status === 'published' ? 'Unpublish' : 'Publish';
+        return '<tr>'
+          + '<td class="tc">' + escHtml(a.title) + '<p>' + escHtml(a.excerpt.substring(0,80)) + '...</p></td>'
+          + '<td><span class="badge cat-' + a.category + '">' + catLabel(a.category) + '</span></td>'
+          + '<td><span class="badge status-' + a.status + '">' + statusLabel + '</span></td>'
+          + '<td style="color:var(--admm);font-size:12px;">' + a.date + '</td>'
+          + '<td><div class="tacts">'
+          + '<button class="tb te" data-act="edit" data-id="' + a.id + '">Edit</button>'
+          + '<button class="tb tp" data-act="toggle" data-id="' + a.id + '">' + toggleLabel + '</button>'
+          + '<button class="tb td" data-act="delete" data-id="' + a.id + '">Delete</button>'
+          + '</div></td></tr>';
+      }).join('');
+  document.getElementById('adm-main-content').innerHTML =
+    '<div class="adm-topbar"><div class="adm-ptitle">Articles</div>'
+    + '<button class="adm-new" onclick="admNav(\'new\')">+ New article</button></div>'
+    + '<div class="adm-stats">'
+    + '<div class="adm-sc"><div class="adm-sn">' + ARTICLES.length + '</div><div class="adm-sl">Total</div></div>'
+    + '<div class="adm-sc"><div class="adm-sn">' + pub + '</div><div class="adm-sl">Published</div></div>'
+    + '<div class="adm-sc"><div class="adm-sn">' + dft + '</div><div class="adm-sl">Drafts</div></div>'
+    + '<div class="adm-sc"><div class="adm-sn">' + ARTICLES.length + '</div><div class="adm-sl">Total articles</div></div></div>'
+    + '<div class="adm-tw"><table class="adm-tbl"><thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Date</th><th style="text-align:right">Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function renderEditor(article) {
+  var a = article || {id:'',title:'',category:'implementation',excerpt:'',body:'',status:'draft',date:new Date().toISOString().split('T')[0],readTime:'5'};
+  edStatus = a.status;
+  var catOpts = ['implementation','career','insight'].map(function(c) {
+    return '<option value="' + c + '"' + (a.category===c?' selected':'') + '>' + catLabel(c) + '</option>';
+  }).join('');
+  var delBtn = article ? '<button class="a-btn a-btn-ghost" style="width:100%;margin-top:.5rem;" data-act="delete" data-id="' + a.id + '">Delete article</button>' : '';
+  var pubCls = a.status === 'published' ? ' st-pub' : '';
+  var dftCls = a.status === 'draft' ? ' st-dft' : '';
+  document.getElementById('adm-main-content').innerHTML = [
+    '<div class="adm-topbar"><div class="adm-ptitle">' + (article ? 'Edit' : 'New') + ' article</div><button class="a-btn a-btn-ghost" style="width:auto;margin:0;padding:8px 16px;" data-act="back">Back</button></div>',
+    '<div class="ed-grid"><div class="ed-main"><div class="adm-card"><div class="adm-ct">Content</div>',
+    '<div class="adm-fld"><label class="a-lbl">Title</label><input type="text" class="a-inp" id="ed-title" value="' + escHtml(a.title) + '" placeholder="Article title..."/></div>',
+    '<div class="adm-fld"><label class="a-lbl">Excerpt</label><textarea class="a-ta" id="ed-excerpt" rows="3" placeholder="Short description...">' + escHtml(a.excerpt) + '</textarea></div>',
+    '<div class="adm-fld"><label class="a-lbl">Body</label><div class="ed-toolbar"><button class="tb-btn" data-md-before="## " data-md-after="">H2</button><button class="tb-btn" data-md-before="### " data-md-after="">H3</button><button class="tb-btn" data-md-before="**" data-md-after="**">B</button><button class="tb-btn" data-md-before="*" data-md-after="*">I</button><button class="tb-btn" data-md-before="> " data-md-after="">Quote</button><button class="tb-btn" data-md-before="- " data-md-after="">List</button></div>',
+    '<textarea class="a-ta" id="editor-body" rows="18" placeholder="Write your article here...">' + escHtml(a.body) + '</textarea><div class="cc" id="wc">0 words</div></div></div></div>',
+    '<div class="ed-side"><div class="adm-card"><div class="adm-ct">Publish</div>',
+    '<div class="adm-fld"><label class="a-lbl">Status</label><div class="st-tog"><button class="st-opt' + pubCls + '" id="opt-pub" data-status="published">Published</button><button class="st-opt' + dftCls + '" id="opt-dft" data-status="draft">Draft</button></div></div>',
+    '<div class="adm-fld"><label class="a-lbl">Date</label><input type="date" class="a-inp" id="ed-date" value="' + a.date + '"/></div>',
+    '<div class="adm-fld"><label class="a-lbl">Read time (min)</label><input type="number" class="a-inp" id="ed-rt" value="' + a.readTime + '" min="1" max="60"/></div></div>',
+    '<div class="adm-card"><div class="adm-ct">Category</div><div class="adm-fld"><select class="a-sel" id="ed-cat">' + catOpts + '</select></div></div>',
+    '<div class="save-bar"><button class="a-btn" data-act="save">Save</button></div>',
+    delBtn,
+    '</div></div>'
+  ].join('');
+  updateWC();
+  var eb = document.getElementById('editor-body');
+  if (eb) eb.addEventListener('input', updateWC);
+}
+
+function setStatus(s) {
+  edStatus = s;
+  var p = document.getElementById('opt-pub'), d = document.getElementById('opt-dft');
+  if (p) p.className = 'st-opt' + (s === 'published' ? ' st-pub' : '');
+  if (d) d.className = 'st-opt' + (s === 'draft' ? ' st-dft' : '');
+}
+function updateWC() {
+  var ta = document.getElementById('editor-body');
+  var wc = document.getElementById('wc');
+  if (!ta || !wc) return;
+  var w = ta.value.trim().split(/\s+/).filter(function(x){ return x; }).length;
+  wc.textContent = w + ' word' + (w !== 1 ? 's' : '');
+}
+function iMd(b, a) {
+  var ta = document.getElementById('editor-body');
+  if (!ta) return;
+  var s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.substring(s, e);
+  ta.value = ta.value.substring(0, s) + b + sel + a + ta.value.substring(e);
+  ta.selectionStart = s + b.length;
+  ta.selectionEnd = s + b.length + sel.length;
+  ta.focus();
+  updateWC();
+}
+function saveArticle() {
+  var title = (document.getElementById('ed-title') || {}).value || '';
+  var excerpt = (document.getElementById('ed-excerpt') || {}).value || '';
+  var body = (document.getElementById('editor-body') || {}).value || '';
+  var category = (document.getElementById('ed-cat') || {}).value || 'implementation';
+  var date = (document.getElementById('ed-date') || {}).value || '';
+  var readTime = (document.getElementById('ed-rt') || {}).value || '5';
+  if (!title.trim() || !excerpt.trim() || !body.trim()) { showToast('Fill in title, excerpt and body'); return; }
+  if (editingId) {
+    var idx = ARTICLES.findIndex(function(a){ return a.id === editingId; });
+    if (idx > -1) ARTICLES[idx] = {id:editingId, title:title.trim(), excerpt:excerpt.trim(), body:body.trim(), category:category, date:date, readTime:readTime, status:edStatus};
+  } else {
+    ARTICLES.unshift({id:'art-'+Date.now(), title:title.trim(), excerpt:excerpt.trim(), body:body.trim(), category:category, date:date, readTime:readTime, status:edStatus});
+  }
+  saveArticles(ARTICLES);
+  renderPublicGrid();
+  showToast(editingId ? 'Article updated' : 'Article created');
+  admNav('articles');
+}
+function editArticle(id) {
+  editingId = id;
+  var a = ARTICLES.find(function(x){ return x.id === id; });
+  if (!a) return;
+  edStatus = a.status;
+  document.querySelectorAll('.adm-ni').forEach(function(n){ n.classList.remove('active'); });
+  renderEditor(a);
+}
+function deleteArticle(id) {
+  if (!confirm('Delete this article?')) return;
+  ARTICLES = ARTICLES.filter(function(a){ return a.id !== id; });
+  saveArticles(ARTICLES);
+  renderPublicGrid();
+  showToast('Deleted');
+  admNav('articles');
+}
+function toggleStatus(id) {
+  var a = ARTICLES.find(function(x){ return x.id === id; });
+  if (!a) return;
+  a.status = a.status === 'published' ? 'draft' : 'published';
+  saveArticles(ARTICLES);
+  renderPublicGrid();
+  showToast(a.status === 'published' ? 'Published' : 'Unpublished');
+  renderAdmArticles();
+}
+
+// ── ADMIN: MESSAGES ──
+function checkUnread() {
+  fetch('messages.php?action=list&password=' + encodeURIComponent(SETTINGS.password))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.success) return;
+      var u = d.messages.filter(function(m){ return !m.read; }).length;
+      var b = document.getElementById('msg-badge');
+      if (b) { b.textContent = u; b.style.display = u ? 'inline' : 'none'; }
+    }).catch(function(){});
+}
+function loadMessages() {
+  var main = document.getElementById('adm-main-content');
+  if (main) main.innerHTML = '<div class="adm-topbar"><div class="adm-ptitle">Messages</div></div><div class="msg-empty">Loading...</div>';
+  fetch('messages.php?action=list&password=' + encodeURIComponent(SETTINGS.password))
+    .then(function(r){ return r.json(); })
+    .then(function(d){ renderMessages(d.success ? d.messages : null); })
+    .catch(function(){ renderMessages(null); });
+}
+function renderMessages(msgs) {
+  var u = msgs ? msgs.filter(function(m){ return !m.read; }).length : 0;
+  var b = document.getElementById('msg-badge');
+  if (b) { b.textContent = u; b.style.display = u ? 'inline' : 'none'; }
+  var parts = ['<div class="adm-topbar"><div class="adm-ptitle">Messages</div></div>'];
+  if (msgs === null) {
+    parts.push('<div class="msg-empty">Could not load messages. Make sure messages.php is uploaded.</div>');
+  } else if (msgs.length === 0) {
+    parts.push('<div class="msg-empty">No messages yet. Contact form submissions will appear here.</div>');
+  } else {
+    parts.push('<div style="margin-bottom:1rem;font-size:13px;color:var(--admm);">' + msgs.length + ' message' + (msgs.length!==1?'s':'') + ' &mdash; ' + u + ' unread</div>');
+    msgs.forEach(function(m) {
+      var mid = String(m.id).replace(/[^a-z0-9_-]/gi,'');
+      var rBtn = m.read ? '' : '<button class="tb tp" data-act="msg-read" data-id="' + mid + '">Mark read</button>';
+      var dBtn = '<button class="tb td" data-act="msg-delete" data-id="' + mid + '">Delete</button>';
+      var svc = m.service ? '<span class="msg-svc">' + escHtml(m.service) + '</span>' : '';
+      parts.push(
+        '<div class="msg-card' + (m.read ? '' : ' unread') + '">' +
+        '<div class="msg-hdr"><div>' +
+        '<div class="msg-name">' + escHtml(m.name) + (m.org ? ' &mdash; ' + escHtml(m.org) : '') + '</div>' +
+        '<div class="msg-meta">' + escHtml(m.email) + ' &nbsp;&middot;&nbsp; ' + escHtml(m.date) + '</div>' +
+        '</div>' + svc + '</div>' +
+        '<div class="msg-body">' + escHtml(m.message) + '</div>' +
+        '<div class="msg-acts"><a href="mailto:' + escHtml(m.email) + '" class="tb te" style="text-decoration:none;">Reply</a>' + rBtn + dBtn + '</div>' +
+        '</div>'
+      );
+    });
+  }
+  var main = document.getElementById('adm-main-content');
+  if (main) main.innerHTML = parts.join('');
+}
+
+function markRead(id) {
+  fetch('messages.php?action=read&id=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(SETTINGS.password))
+    .then(function(){ loadMessages(); }).catch(function(){});
+}
+function deleteMsg(id) {
+  if (!confirm('Delete this message?')) return;
+  fetch('messages.php?action=delete&id=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(SETTINGS.password))
+    .then(function(){ loadMessages(); showToast('Deleted'); }).catch(function(){});
+}
+
+// ── ADMIN: SETTINGS ──
+function renderAdmSettings() {
+  document.getElementById('adm-main-content').innerHTML =
+    '<div class="adm-topbar"><div class="adm-ptitle">Settings</div></div>'
+    + '<div style="max-width:520px;display:flex;flex-direction:column;gap:1rem;">'
+    + '<div class="adm-card"><div class="adm-ct">Security</div>'
+    + '<div class="adm-fld"><label class="a-lbl">New password</label><input type="password" class="a-inp" id="set-pw" placeholder="Leave blank to keep current"/></div></div>'
+    + '<div class="adm-card"><div class="adm-ct">Site</div>'
+    + '<div class="adm-fld"><label class="a-lbl">Site title</label><input type="text" class="a-inp" id="set-title" value="' + escHtml(SETTINGS.siteTitle) + '"/></div></div>'
+    + '<button class="a-btn" style="margin:0;" onclick="saveAdmSettings()">Save settings</button></div>';
+}
+function saveAdmSettings() {
+  var pw = (document.getElementById('set-pw') || {}).value || '';
+  var title = (document.getElementById('set-title') || {}).value || '';
+  if (pw) SETTINGS.password = pw;
+  if (title) SETTINGS.siteTitle = title;
+  saveSettings(SETTINGS);
+  showToast('Settings saved');
+}
+
+// ── PUBLIC GRID ──
+function renderPublicGrid() {
+  var grid = document.getElementById('pub-grid');
+  if (!grid) return;
+  var visible = ARTICLES.filter(function(a) {
+    if (a.status !== 'published') return false;
+    var mc = pubFilter === 'all' || a.category === pubFilter;
+    var mq = !pubSearch || a.title.toLowerCase().indexOf(pubSearch) > -1 || a.excerpt.toLowerCase().indexOf(pubSearch) > -1;
+    return mc && mq;
+  });
+  if (visible.length === 0) {
+    grid.innerHTML = '<div class="grid-empty">' + (pubSearch ? 'No articles match your search.' : 'No articles published yet.') + '</div>';
+    return;
+  }
+  grid.innerHTML = visible.map(function(a, i) {
+    return '<div class="art-card" data-act="open" data-id="' + a.id + '" style="animation-delay:' + (i*0.05) + 's">'
+      + '<div class="card-top"><span class="badge cat-' + a.category + '">' + catLabel(a.category) + '</span></div>'
+      + '<div class="card-num">' + String(i+1).padStart(2,'0') + '</div>'
+      + '<div class="card-title">' + escHtml(a.title) + '</div>'
+      + '<div class="card-excerpt">' + escHtml(a.excerpt) + '</div>'
+      + '<div class="card-footer"><span class="card-date">' + a.readTime + ' min read &nbsp;&middot;&nbsp; ' + a.date + '</span>'
+      + '<div class="card-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+      + '</div></div>';
+  }).join('');
+}
+function filterPub(cat, btn) {
+  pubFilter = cat;
+  document.querySelectorAll('.pill').forEach(function(p){ p.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  renderPublicGrid();
+}
+function searchPub(val) {
+  pubSearch = val.toLowerCase();
+  renderPublicGrid();
+}
+
+// ── ARTICLE READER ──
+function openArticle(id) {
+  var a = ARTICLES.find(function(x){ return x.id === id; });
+  if (!a || a.status !== 'published') return;
+  document.getElementById('reader-content').innerHTML =
+    '<div class="rdr-meta"><span class="badge cat-' + a.category + '">' + catLabel(a.category) + '</span><span class="rdr-date">' + a.readTime + ' min read &nbsp;&middot;&nbsp; ' + a.date + '</span></div>'
+    + '<h1 class="rdr-title">' + escHtml(a.title) + '</h1>'
+    + '<div class="rdr-intro">' + escHtml(a.excerpt) + '</div>'
+    + '<div class="rdr-body">' + mdToHtml(a.body) + '</div>';
+  go('reader');
+}
+
+// ── MARKDOWN RENDERER ──
+function mdToHtml(md) {
+  var h = escHtml(md);
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/^- (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/(<li>[^<]*<\/li>\s*)+/g, function(m){ return '<ul>' + m + '</ul>'; });
+  h = h.split('\n\n').map(function(block) {
+    block = block.trim();
+    if (!block) return '';
+    if (/^<(h[1-6]|ul|ol|blockquote|hr)/.test(block)) return block;
+    return '<p>' + block.replace(/\n/g, ' ') + '</p>';
+  }).join('\n');
+  return h;
+}
+function buildTicker() {
+  var ticker = document.getElementById('ticker');
+  if (!ticker) return;
+  var items = ['Trading system implementation','UAT best practices','Go-live planning','Capital markets consulting','Data migration strategy','Front-to-back integration','T+1 settlement impact','Risk system delivery','Trade lifecycle management','Financial technology careers'];
+  items.concat(items).forEach(function(t) {
+    var el = document.createElement('div');
+    el.className = 'ticker-item';
+    el.innerHTML = '<span class="ticker-dot"></span>' + t;
+    ticker.appendChild(el);
+  });
+}
+
+// ── BEEHIIV ──
+function handleNL(e) {
+  e.preventDefault();
+  var email = (document.getElementById('beehiiv-email') || {}).value || '';
+  var btn = document.getElementById('beehiiv-btn');
+  var msg = document.getElementById('beehiiv-msg');
+  if (!email) return;
+  if (btn) { btn.textContent = 'Subscribing...'; btn.disabled = true; }
+  fetch('https://api.beehiiv.com/v2/publications/pub_a711845b-ee5c-4a9e-8cd2-27f8435f5305/subscriptions', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email:email, reactivate_existing:false, send_welcome_email:true, utm_source:'linkware.org', utm_medium:'website'})
+  }).then(function(r) {
+    if (r.ok || r.status === 201) {
+      if (btn) { btn.textContent = 'Subscribed'; btn.style.background = '#1d9e75'; btn.style.color = '#fff'; btn.disabled = false; }
+      var em = document.getElementById('beehiiv-email'); if (em) em.value = '';
+      if (msg) { msg.style.display = 'block'; msg.textContent = 'You are on the list. Watch your inbox.'; }
+    } else {
+      if (btn) { btn.textContent = 'Subscribe'; btn.disabled = false; }
+    }
+  }).catch(function() {
+    if (btn) { btn.textContent = 'Subscribe'; btn.disabled = false; }
+  });
+}
+
+// ── CONTACT FORM ──
+function handleContact(e) {
+  e.preventDefault();
+  var form = e.target;
+  var btn = document.getElementById('cf-sub');
+  var ok = document.getElementById('cf-ok');
+  var err = document.getElementById('cf-err');
+  if (ok) ok.style.display = 'none';
+  if (err) err.style.display = 'none';
+  if (btn) { btn.textContent = 'Sending...'; btn.disabled = true; }
+  fetch('contact.php', {method:'POST', body: new FormData(form)})
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.success) {
+        if (ok) ok.style.display = 'block';
+        form.reset();
+        if (btn) btn.style.display = 'none';
+      } else {
+        if (err) { err.textContent = d.message || 'Something went wrong.'; err.style.display = 'block'; }
+        if (btn) { btn.textContent = 'Send message'; btn.disabled = false; }
+      }
+    }).catch(function() {
+      if (err) { err.textContent = 'Could not send. Please email admin@linkware.org'; err.style.display = 'block'; }
+      if (btn) { btn.textContent = 'Send message'; btn.disabled = false; }
+    });
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+// ── BOOT ──
+buildTicker();
+renderPublicGrid();
+// Event delegation for admin table and article grid buttons
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('[data-act]');
+  if (!el) return;
+  var act = el.getAttribute('data-act');
+  var id = el.getAttribute('data-id');
+  if (act === 'edit') editArticle(id);
+  else if (act === 'toggle') toggleStatus(id);
+  else if (act === 'delete') deleteArticle(id);
+  else if (act === 'open') openArticle(id);
+});
+var _lpw = document.getElementById('login-pw');
+if (_lpw) _lpw.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+
+</script>
+</body>
+</html>
