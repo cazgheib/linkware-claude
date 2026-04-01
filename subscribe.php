@@ -42,6 +42,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'email' => $email,
     ]);
     file_put_contents($subs_file, json_encode($subs, JSON_PRETTY_PRINT));
+
+    // Forward to Beehiiv server-side (avoids browser CORS/auth issues)
+    $bh_payload = json_encode([
+        'email'               => $email,
+        'reactivate_existing' => false,
+        'send_welcome_email'  => true,
+        'utm_source'          => 'linkware.org',
+        'utm_medium'          => 'website',
+    ]);
+    $ch = curl_init('https://api.beehiiv.com/v2/publications/pub_a711845b-ee5c-4a9e-8cd2-27f8435f5305/subscriptions');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $bh_payload,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT        => 10,
+    ]);
+    curl_exec($ch);
+    curl_close($ch);
+
     echo json_encode(['success' => true]);
     exit;
 }

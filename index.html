@@ -1741,17 +1741,16 @@ function handleNL(e) {
   var msg = document.getElementById('beehiiv-msg');
   if (!email) return;
   if (btn) { btn.textContent = 'Subscribing...'; btn.disabled = true; }
-  fetch('https://api.beehiiv.com/v2/publications/pub_a711845b-ee5c-4a9e-8cd2-27f8435f5305/subscriptions', {
+  fetch('subscribe.php', {
     method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({email:email, reactivate_existing:false, send_welcome_email:true, utm_source:'linkware.org', utm_medium:'website'})
-  }).then(function(r) {
-    if (r.ok || r.status === 201) {
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email: email})
+  }).then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
       if (btn) { btn.textContent = 'Subscribed'; btn.style.background = '#1d9e75'; btn.style.color = '#fff'; btn.disabled = false; }
       var em = document.getElementById('beehiiv-email'); if (em) em.value = '';
       if (msg) { msg.style.display = 'block'; msg.textContent = 'You are on the list. Watch your inbox.'; }
-      // Also save to local subscribers list
-      fetch('subscribe.php', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:email})}).catch(function(){});
     } else {
       if (btn) { btn.textContent = 'Subscribe'; btn.disabled = false; }
     }
