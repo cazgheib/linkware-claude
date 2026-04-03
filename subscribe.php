@@ -1,21 +1,19 @@
 <?php
 // Linkware subscriber handler
-// POST (no auth): save a new subscriber to subscribers.json
+// POST (no auth): save a new subscriber to MySQL + forward to Beehiiv server-side
 // GET  (auth):    list / delete subscribers
+
+require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: https://linkware.org');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$subs_file = __DIR__ . '/subscribers.json';
-$password  = 'linkware2025'; // Keep in sync with admin panel password
-
 // ── POST: subscribe ──────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $raw   = file_get_contents('php://input');
-    $data  = json_decode($raw, true);
-    $email = isset($data['email']) ? filter_var(trim($data['email']), FILTER_SANITIZE_EMAIL) : '';
+    $data  = json_decode(file_get_contents('php://input'), true) ?? [];
+    $email = filter_var(trim($data['email'] ?? ''), FILTER_SANITIZE_EMAIL);
 
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
@@ -23,25 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $subs = [];
-    if (file_exists($subs_file)) {
-        $subs = json_decode(file_get_contents($subs_file), true) ?? [];
+    $db = getDB();
+
+    // Deduplicate
+    $stmt = $db->prepare('SELECT id FROM subscribers WHERE email=?');
+    $stmt->execute([strtolower($email)]);
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => true, 'message' => 'Already subscribed.']);
+        exit;
     }
 
-    // Deduplicate by email (case-insensitive)
-    foreach ($subs as $s) {
-        if (strtolower($s['email']) === strtolower($email)) {
-            echo json_encode(['success' => true, 'message' => 'Already subscribed.']);
-            exit;
-        }
-    }
-
-    array_unshift($subs, [
-        'id'    => uniqid('sub_', true),
-        'date'  => date('Y-m-d H:i:s'),
-        'email' => $email,
-    ]);
-    file_put_contents($subs_file, json_encode($subs, JSON_PRETTY_PRINT));
+    $db->prepare('INSERT INTO subscribers (id,date,email) VALUES (?,?,?)')
+       ->execute([uniqid('sub_', true), date('Y-m-d H:i:s'), strtolower($email)]);
 
     // Forward to Beehiiv server-side (avoids browser CORS/auth issues)
     $bh_payload = json_encode([
@@ -74,28 +65,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $provided = $_SERVER['HTTP_X_ADMIN_PASSWORD'] ?? ($_GET['password'] ?? '');
-if ($provided !== $password) {
+if ($provided !== ADMIN_PASSWORD) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorised']);
     exit;
 }
 
-$subs = [];
-if (file_exists($subs_file)) {
-    $subs = json_decode(file_get_contents($subs_file), true) ?? [];
-}
-
+$db     = getDB();
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'list') {
-    echo json_encode(['success' => true, 'subscribers' => $subs]);
+    $rows = $db->query('SELECT * FROM subscribers ORDER BY date DESC')->fetchAll();
+    echo json_encode(['success' => true, 'subscribers' => array_map(function ($r) {
+        return ['id' => $r['id'], 'date' => $r['date'], 'email' => $r['email']];
+    }, $rows)]);
 
 } elseif ($action === 'delete' && isset($_GET['id'])) {
-    $id   = $_GET['id'];
-    $subs = array_values(array_filter($subs, function ($s) use ($id) {
-        return $s['id'] !== $id;
-    }));
-    file_put_contents($subs_file, json_encode($subs, JSON_PRETTY_PRINT));
+    $db->prepare('DELETE FROM subscribers WHERE id=?')->execute([$_GET['id']]);
     echo json_encode(['success' => true]);
 
 } else {

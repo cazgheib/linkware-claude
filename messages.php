@@ -1,53 +1,45 @@
 <?php
-// Linkware messages API
-// Returns or updates messages from messages.json
-// Protected by the same admin password
+// Linkware messages API — reads/writes from MySQL
+// Protected by admin password
+
+require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: https://linkware.org');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$messages_file = __DIR__ . '/messages.json';
-
-// Simple password check via header or POST param
-$password      = 'linkware2025'; // Keep in sync with your admin panel password
-$provided      = $_SERVER['HTTP_X_ADMIN_PASSWORD'] ?? ($_POST['password'] ?? $_GET['password'] ?? '');
-
-if ($provided !== $password) {
+$provided = $_SERVER['HTTP_X_ADMIN_PASSWORD'] ?? ($_POST['password'] ?? ($_GET['password'] ?? ''));
+if ($provided !== ADMIN_PASSWORD) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorised']);
     exit;
 }
 
+$db     = getDB();
 $action = $_GET['action'] ?? 'list';
 
-// Load messages
-$messages = [];
-if (file_exists($messages_file)) {
-    $raw = file_get_contents($messages_file);
-    $messages = json_decode($raw, true) ?? [];
-}
-
 if ($action === 'list') {
-    echo json_encode(['success' => true, 'messages' => $messages]);
+    $rows = $db->query('SELECT * FROM messages ORDER BY date DESC')->fetchAll();
+    echo json_encode(['success' => true, 'messages' => array_map(function ($r) {
+        return [
+            'id'      => $r['id'],
+            'date'    => $r['date'],
+            'name'    => $r['name'],
+            'org'     => $r['org'],
+            'email'   => $r['email'],
+            'service' => $r['service'],
+            'message' => $r['message'],
+            'read'    => (bool)$r['is_read'],
+        ];
+    }, $rows)]);
 
 } elseif ($action === 'read' && isset($_GET['id'])) {
-    // Mark as read
-    $id = $_GET['id'];
-    foreach ($messages as &$m) {
-        if ($m['id'] === $id) { $m['read'] = true; break; }
-    }
-    file_put_contents($messages_file, json_encode($messages, JSON_PRETTY_PRINT));
+    $db->prepare('UPDATE messages SET is_read=1 WHERE id=?')->execute([$_GET['id']]);
     echo json_encode(['success' => true]);
 
 } elseif ($action === 'delete' && isset($_GET['id'])) {
-    // Delete message
-    $id = $_GET['id'];
-    $messages = array_values(array_filter($messages, function($m) use ($id) {
-        return $m['id'] !== $id;
-    }));
-    file_put_contents($messages_file, json_encode($messages, JSON_PRETTY_PRINT));
+    $db->prepare('DELETE FROM messages WHERE id=?')->execute([$_GET['id']]);
     echo json_encode(['success' => true]);
 
 } else {

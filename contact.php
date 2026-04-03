@@ -1,6 +1,8 @@
 <?php
 // Linkware contact form handler
-// Sends email to admin@linkware.org AND saves message to messages.json
+// Sends email to admin@linkware.org AND saves message to MySQL
+
+require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: https://linkware.org');
@@ -13,10 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$to            = 'admin@linkware.org';
-$site          = 'Linkware';
-$subject       = 'New contact form submission — ' . $site;
-$messages_file = __DIR__ . '/messages.json';
+$to   = 'admin@linkware.org';
+$site = 'Linkware';
 
 function clean($val) {
     return htmlspecialchars(strip_tags(trim($val)), ENT_QUOTES, 'UTF-8');
@@ -39,35 +39,22 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-// Save to JSON
-$new_msg = [
-    'id'      => uniqid('msg_', true),
-    'date'    => date('Y-m-d H:i:s'),
-    'name'    => $name,
-    'org'     => $org,
-    'email'   => $email,
-    'service' => $service,
-    'message' => $message,
-    'read'    => false,
-];
-$messages = [];
-if (file_exists($messages_file)) {
-    $raw = file_get_contents($messages_file);
-    $messages = json_decode($raw, true) ?? [];
-}
-array_unshift($messages, $new_msg);
-file_put_contents($messages_file, json_encode($messages, JSON_PRETTY_PRINT));
+// Save to database
+$db = getDB();
+$db->prepare('INSERT INTO messages (id,date,name,org,email,service,message,is_read) VALUES (?,?,?,?,?,?,?,0)')
+   ->execute([uniqid('msg_', true), date('Y-m-d H:i:s'), $name, $org, $email, $service, $message]);
 
 // Send email
-$body  = "New enquiry from the Linkware contact form.\n";
-$body .= str_repeat('-', 50) . "\n\n";
-$body .= "Name:         {$name}\n";
+$subject = 'New contact form submission — ' . $site;
+$body    = "New enquiry from the Linkware contact form.\n";
+$body   .= str_repeat('-', 50) . "\n\n";
+$body   .= "Name:         {$name}\n";
 if ($org)     $body .= "Organisation: {$org}\n";
-$body .= "Email:        {$email}\n";
+$body   .= "Email:        {$email}\n";
 if ($service) $body .= "Service:      {$service}\n";
-$body .= "\nMessage:\n{$message}\n\n";
-$body .= str_repeat('-', 50) . "\n";
-$body .= "Sent from linkware.org at " . date('Y-m-d H:i:s T') . "\n";
+$body   .= "\nMessage:\n{$message}\n\n";
+$body   .= str_repeat('-', 50) . "\n";
+$body   .= "Sent from linkware.org at " . date('Y-m-d H:i:s T') . "\n";
 
 $headers  = "From: {$site} <noreply@linkware.org>\r\n";
 $headers .= "Reply-To: {$name} <{$email}>\r\n";

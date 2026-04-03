@@ -1305,12 +1305,21 @@ var DEFAULT_SETTINGS = {
   siteTagline: 'Capital Markets, Engineered'
 };
 
-function loadArticles() {
-  try { var r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : DEFAULT_ARTICLES; }
-  catch(e) { return DEFAULT_ARTICLES; }
-}
-function saveArticles(a) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(a)); } catch(e) {}
+function fetchArticles(password, callback) {
+  var url = password
+    ? 'articles.php?action=list&password=' + encodeURIComponent(password)
+    : 'articles.php?action=published';
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success && d.articles) ARTICLES = d.articles;
+      else if (!password) ARTICLES = DEFAULT_ARTICLES;
+      if (callback) callback();
+    })
+    .catch(function(){
+      if (!password) ARTICLES = DEFAULT_ARTICLES;
+      if (callback) callback();
+    });
 }
 function loadSettings() {
   try { var r = localStorage.getItem(SETTINGS_KEY); return r ? JSON.parse(r) : DEFAULT_SETTINGS; }
@@ -1320,7 +1329,7 @@ function saveSettings(s) {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch(e) {}
 }
 
-var ARTICLES = loadArticles();
+var ARTICLES = [];
 var SETTINGS = loadSettings();
 var pubFilter = 'all';
 var pubSearch = '';
@@ -1343,8 +1352,10 @@ function goNl() {
   }, 150);
 }
 function goAdmin() {
-  if (sessionStorage.getItem(SESSION_KEY) === 'true') { go('admin'); admNav('articles'); }
-  else go('login');
+  if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+    go('admin');
+    fetchArticles(SETTINGS.password, function(){ admNav('articles'); });
+  } else go('login');
 }
 
 // ── MOBILE DRAWER ──
@@ -1369,8 +1380,7 @@ function doLogin() {
     if (err) err.style.display = 'none';
     pw.value = '';
     go('admin');
-    admNav('articles');
-    setTimeout(checkUnread, 600);
+    fetchArticles(SETTINGS.password, function(){ admNav('articles'); setTimeout(checkUnread, 300); });
   } else {
     if (err) err.style.display = 'block';
     pw.value = '';
@@ -1497,16 +1507,25 @@ function saveArticle() {
   var date = (document.getElementById('ed-date') || {}).value || '';
   var readTime = (document.getElementById('ed-rt') || {}).value || '5';
   if (!title.trim() || !excerpt.trim() || !body.trim()) { showToast('Fill in title, excerpt and body'); return; }
-  if (editingId) {
-    var idx = ARTICLES.findIndex(function(a){ return a.id === editingId; });
-    if (idx > -1) ARTICLES[idx] = {id:editingId, title:title.trim(), excerpt:excerpt.trim(), body:body.trim(), category:category, date:date, readTime:readTime, status:edStatus};
-  } else {
-    ARTICLES.unshift({id:'art-'+Date.now(), title:title.trim(), excerpt:excerpt.trim(), body:body.trim(), category:category, date:date, readTime:readTime, status:edStatus});
-  }
-  saveArticles(ARTICLES);
-  renderPublicGrid();
-  showToast(editingId ? 'Article updated' : 'Article created');
-  admNav('articles');
+  var btn = document.querySelector('[data-act="save"]');
+  if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+  fetch('articles.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-Admin-Password': SETTINGS.password},
+    body: JSON.stringify({id: editingId || '', title: title.trim(), excerpt: excerpt.trim(), body: body.trim(), category: category, date: date, readTime: readTime, status: edStatus})
+  }).then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.success) {
+      fetchArticles(SETTINGS.password, function(){
+        renderPublicGrid();
+        showToast(editingId ? 'Article updated' : 'Article created');
+        admNav('articles');
+      });
+    } else {
+      showToast(d.message || 'Save failed');
+      if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
+    }
+  }).catch(function(){ showToast('Save failed'); if (btn) { btn.textContent = 'Save'; btn.disabled = false; } });
 }
 function editArticle(id) {
   editingId = id;
@@ -1518,20 +1537,14 @@ function editArticle(id) {
 }
 function deleteArticle(id) {
   if (!confirm('Delete this article?')) return;
-  ARTICLES = ARTICLES.filter(function(a){ return a.id !== id; });
-  saveArticles(ARTICLES);
-  renderPublicGrid();
-  showToast('Deleted');
-  admNav('articles');
+  fetch('articles.php?action=delete&id=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(SETTINGS.password))
+    .then(function(){ fetchArticles(SETTINGS.password, function(){ renderPublicGrid(); showToast('Deleted'); admNav('articles'); }); })
+    .catch(function(){ showToast('Delete failed'); });
 }
 function toggleStatus(id) {
-  var a = ARTICLES.find(function(x){ return x.id === id; });
-  if (!a) return;
-  a.status = a.status === 'published' ? 'draft' : 'published';
-  saveArticles(ARTICLES);
-  renderPublicGrid();
-  showToast(a.status === 'published' ? 'Published' : 'Unpublished');
-  renderAdmArticles();
+  fetch('articles.php?action=toggle&id=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(SETTINGS.password))
+    .then(function(){ fetchArticles(SETTINGS.password, function(){ renderPublicGrid(); renderAdmArticles(); showToast('Status updated'); }); })
+    .catch(function(){ showToast('Update failed'); });
 }
 
 // ── ADMIN: MESSAGES ──
@@ -1692,14 +1705,28 @@ function searchPub(val) {
 
 // ── ARTICLE READER ──
 function openArticle(id) {
-  var a = ARTICLES.find(function(x){ return x.id === id; });
-  if (!a || a.status !== 'published') return;
-  document.getElementById('reader-content').innerHTML =
+  go('reader');
+  var rc = document.getElementById('reader-content');
+  if (rc) rc.innerHTML = '<div style="text-align:center;padding:4rem;color:var(--ink4);">Loading&#8230;</div>';
+  // Use cached full article if available (admin), otherwise fetch from API
+  var cached = ARTICLES.find(function(x){ return x.id === id && x.body; });
+  if (cached) { renderArticle(cached); return; }
+  fetch('articles.php?action=get&id=' + encodeURIComponent(id))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.success && d.article) renderArticle(d.article);
+      else if (rc) rc.innerHTML = '<div style="text-align:center;padding:4rem;">Article not found.</div>';
+    })
+    .catch(function(){ if (rc) rc.innerHTML = '<div style="text-align:center;padding:4rem;">Failed to load article.</div>'; });
+}
+function renderArticle(a) {
+  var rc = document.getElementById('reader-content');
+  if (!rc) return;
+  rc.innerHTML =
     '<div class="rdr-meta"><span class="badge cat-' + a.category + '">' + catLabel(a.category) + '</span><span class="rdr-date">' + a.readTime + ' min read &nbsp;&middot;&nbsp; ' + a.date + '</span></div>'
     + '<h1 class="rdr-title">' + escHtml(a.title) + '</h1>'
     + '<div class="rdr-intro">' + escHtml(a.excerpt) + '</div>'
     + '<div class="rdr-body">' + mdToHtml(a.body) + '</div>';
-  go('reader');
 }
 
 // ── MARKDOWN RENDERER ──
@@ -1797,7 +1824,7 @@ function showToast(msg) {
 
 // ── BOOT ──
 buildTicker();
-renderPublicGrid();
+fetchArticles(null, renderPublicGrid);
 // Event delegation for admin table and article grid buttons
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-act]');
