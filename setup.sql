@@ -29,3 +29,16 @@ CREATE TABLE IF NOT EXISTS subscribers (
     date  DATETIME     NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS settings (
+    `key`   VARCHAR(64) PRIMARY KEY,
+    `value` TEXT        NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Default settings
+INSERT IGNORE INTO settings (`key`, `value`) VALUES
+    ('site_title',    'Linkware'),
+    ('site_tagline',  'Capital Markets, Engineered'),
+    ('admin_password','linkware2025');
+
+-- After running setup.sql, run seed.php to insert the default articles.
